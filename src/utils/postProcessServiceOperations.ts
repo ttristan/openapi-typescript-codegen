@@ -1,8 +1,9 @@
 import type { Operation } from '../client/interfaces/Operation';
 import type { Service } from '../client/interfaces/Service';
 import { flatMap } from './flatMap';
+import { postProcessServiceOperationsJsonld } from './postProcessServiceOperationsJsonld';
 
-export const postProcessServiceOperations = (service: Service): Operation[] => {
+export const postProcessServiceOperations = (service: Service, options?: { useJsonld: boolean }): Operation[] => {
     const names = new Map<string, number>();
 
     return service.operations.map(operation => {
@@ -20,6 +21,10 @@ export const postProcessServiceOperations = (service: Service): Operation[] => {
             clone.name = `${name}${index}`;
         }
         names.set(name, index + 1);
+
+        if (options?.useJsonld) {
+            postProcessServiceOperationsJsonld(clone);
+        }
 
         return clone;
     });

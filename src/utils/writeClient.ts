@@ -22,6 +22,7 @@ import { writeClientServices } from './writeClientServices';
  * @param httpClient The selected httpClient (fetch, xhr, node or axios)
  * @param useOptions Use options or arguments functions
  * @param useUnionTypes Use union types instead of enums
+ * @param useJsonld Use JSON+LD interfaces
  * @param exportCore Generate core client classes
  * @param exportServices Generate services
  * @param exportModels Generate models
@@ -39,6 +40,7 @@ export const writeClient = async (
     httpClient: HttpClient,
     useOptions: boolean,
     useUnionTypes: boolean,
+    useJsonld: boolean,
     exportCore: boolean,
     exportServices: boolean,
     exportModels: boolean,
@@ -73,6 +75,7 @@ export const writeClient = async (
             outputPathServices,
             httpClient,
             useUnionTypes,
+            useJsonld,
             useOptions,
             indent,
             postfix,

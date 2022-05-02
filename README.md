@@ -43,6 +43,7 @@ $ openapi --help
     --name <value>            Custom client class name
     --useOptions              Use options instead of arguments
     --useUnionTypes           Use union types instead of enums
+    --useJsonld               Use JSON-LD interfaces
     --exportCore <value>      Write core files to disk (default: true)
     --exportServices <value>  Write services to disk (default: true)
     --exportModels <value>    Write models to disk (default: true)

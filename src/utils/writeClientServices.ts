@@ -16,6 +16,7 @@ import type { Templates } from './registerHandlebarTemplates';
  * @param outputPath Directory to write the generated files to
  * @param httpClient The selected httpClient (fetch, xhr, node or axios)
  * @param useUnionTypes Use union types instead of enums
+ * @param useJsonld Use JSON-LD interfaces
  * @param useOptions Use options or arguments functions
  * @param indent Indentation options (4, 2 or tab)
  * @param postfix Service name postfix
@@ -27,6 +28,7 @@ export const writeClientServices = async (
     outputPath: string,
     httpClient: HttpClient,
     useUnionTypes: boolean,
+    useJsonld: boolean,
     useOptions: boolean,
     indent: Indent,
     postfix: string,
@@ -38,6 +40,7 @@ export const writeClientServices = async (
             ...service,
             httpClient,
             useUnionTypes,
+            useJsonld,
             useOptions,
             postfix,
             exportClient: isDefined(clientName),

@@ -19,6 +19,7 @@ export type Options = {
     clientName?: string;
     useOptions?: boolean;
     useUnionTypes?: boolean;
+    useJsonld?: boolean;
     exportCore?: boolean;
     exportServices?: boolean;
     exportModels?: boolean;
@@ -39,6 +40,7 @@ export type Options = {
  * @param clientName Custom client class name
  * @param useOptions Use options or arguments functions
  * @param useUnionTypes Use union types instead of enums
+ * @param useJsonld Use JSON-LD interfaces
  * @param exportCore Generate core client classes
  * @param exportServices Generate services
  * @param exportModels Generate models
@@ -55,6 +57,7 @@ export const generate = async ({
     clientName,
     useOptions = false,
     useUnionTypes = false,
+    useJsonld = false,
     exportCore = true,
     exportServices = true,
     exportModels = true,
@@ -75,7 +78,7 @@ export const generate = async ({
     switch (openApiVersion) {
         case OpenApiVersion.V2: {
             const client = parseV2(openApi);
-            const clientFinal = postProcessClient(client);
+            const clientFinal = postProcessClient(client, { useJsonld });
             if (!write) break;
             await writeClient(
                 clientFinal,
@@ -84,6 +87,7 @@ export const generate = async ({
                 httpClient,
                 useOptions,
                 useUnionTypes,
+                useJsonld,
                 exportCore,
                 exportServices,
                 exportModels,
@@ -98,7 +102,8 @@ export const generate = async ({
 
         case OpenApiVersion.V3: {
             const client = parseV3(openApi);
-            const clientFinal = postProcessClient(client);
+            const clientFinal = postProcessClient(client, { useJsonld });
+
             if (!write) break;
             await writeClient(
                 clientFinal,
@@ -107,6 +112,7 @@ export const generate = async ({
                 httpClient,
                 useOptions,
                 useUnionTypes,
+                useJsonld,
                 exportCore,
                 exportServices,
                 exportModels,
