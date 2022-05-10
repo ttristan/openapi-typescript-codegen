@@ -3,7 +3,7 @@ import type { Service } from '../client/interfaces/Service';
 import { flatMap } from './flatMap';
 import { postProcessServiceOperationsJsonld } from './postProcessServiceOperationsJsonld';
 
-export const postProcessServiceOperations = (service: Service, options?: { useJsonld: boolean }): Operation[] => {
+export const postProcessServiceOperations = (service: Service, options?: { useJsonld?: boolean }): Operation[] => {
     const names = new Map<string, number>();
 
     return service.operations.map(operation => {

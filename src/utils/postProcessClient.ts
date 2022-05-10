@@ -7,7 +7,11 @@ import { postProcessService } from './postProcessService';
  * @param client Client object with all the models, services, etc.
  * @param options
  */
-export const postProcessClient = (client: Client, options?: { useJsonld: boolean }): Client => {
+export const postProcessClient = (client: Client, options?: { useJsonld?: boolean }): Client => {
+    if (options?.useJsonld) {
+        client.models = client.models.filter(model => model.name.includes('jsonld'));
+    }
+
     return {
         ...client,
         models: client.models.map(model => postProcessModel(model)),

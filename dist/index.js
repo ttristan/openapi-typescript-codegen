@@ -2464,31 +2464,34 @@ const flatMap = (array, callback) => {
 };
 
 const postProcessServiceOperationsJsonld = (operation) => {
-    const { service: serviceName } = operation;
     operation.parameters.forEach(parameter => {
         parameter.mediaType = 'application/ld+json';
         parameter.imports = [];
     });
     if (operation.parametersBody) {
-        operation.parametersBody.base = replaceServiceName(serviceName, operation.parametersBody.base);
-        operation.parametersBody.type = replaceServiceName(serviceName, operation.parametersBody.base);
+        operation.parametersBody.base = replaceServiceName(operation.parametersBody.base);
+        operation.parametersBody.type = replaceServiceName(operation.parametersBody.base);
         operation.parametersBody.imports = [];
     }
-    operation.imports = operation.imports.map(importString => replaceServiceName(serviceName, importString));
+    operation.imports = operation.imports.map(importString => replaceServiceName(importString));
     operation.results.forEach(result => {
-        result.base = replaceServiceName(serviceName, result.base);
-        result.type = replaceServiceName(serviceName, result.base);
-        result.imports = result.imports.map(importString => replaceServiceName(serviceName, importString));
+        processResult(result);
+        if (result.export === 'one-of' || result.export === 'any-of' || result.export === 'all-of') {
+            result.properties.forEach(processResult);
+        }
     });
 };
-const replaceServiceName = (serviceName, replaceString) => {
+const processResult = (result) => {
+    result.base = replaceServiceName(result.base);
+    result.type = replaceServiceName(result.base);
+    result.imports = result.imports.map(importString => replaceServiceName(importString));
+    return result;
+};
+const replaceServiceName = (replaceString) => {
     if (replaceString === 'void' || replaceString.includes('jsonld')) {
         return replaceString;
     }
-    const version = replaceString.match(/_v\d+_/);
-    const versionString = version ? `_${version[0].split('_')[1]}` : '';
-    const versionedServiceName = `${serviceName}${versionString}`;
-    return replaceString.replace(versionedServiceName, `${versionedServiceName}_jsonld`);
+    return replaceString.replace('_', '_jsonld_');
 };
 
 const postProcessServiceOperations = (service, options) => {
@@ -2527,6 +2530,9 @@ const postProcessService = (service, options) => {
  * @param options
  */
 const postProcessClient = (client, options) => {
+    if (options?.useJsonld) {
+        client.models = client.models.filter(model => model.name.includes('jsonld'));
+    }
     return {
         ...client,
         models: client.models.map(model => postProcessModel(model)),
