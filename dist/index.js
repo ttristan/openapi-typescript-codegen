@@ -1928,6 +1928,7 @@ const getOperationParameters = (openApi, parameters) => {
 const BASIC_MEDIA_TYPES = [
     'application/json-patch+json',
     'application/json',
+    'application/ld+json',
     'application/x-www-form-urlencoded',
     'text/json',
     'text/plain',
