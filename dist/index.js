@@ -4,17 +4,14 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 var camelCase = require('camelcase');
 var RefParser = require('json-schema-ref-parser');
-var Handlebars = require('handlebars/runtime');
 var os = require('os');
 var path = require('path');
-var fs = require('fs');
-var util = require('util');
+var fsExtra = require('fs-extra');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
 var camelCase__default = /*#__PURE__*/_interopDefaultLegacy(camelCase);
 var RefParser__default = /*#__PURE__*/_interopDefaultLegacy(RefParser);
-var Handlebars__default = /*#__PURE__*/_interopDefaultLegacy(Handlebars);
 
 exports.HttpClient = void 0;
 (function (HttpClient) {
@@ -40,7 +37,7 @@ exports.Indent = void 0;
  * @param pattern
  */
 const getPattern = (pattern) => {
-    return pattern?.replace(/\\/g, '\\\\');
+    return pattern === null || pattern === void 0 ? void 0 : pattern.replace(/\\/g, '\\\\');
 };
 
 const isString = (val) => {
@@ -54,11 +51,12 @@ const isString = (val) => {
  * @param definition
  */
 const extendEnum$1 = (enumerators, definition) => {
-    const names = definition['x-enum-varnames']?.filter(isString);
-    const descriptions = definition['x-enum-descriptions']?.filter(isString);
+    var _a, _b;
+    const names = (_a = definition['x-enum-varnames']) === null || _a === void 0 ? void 0 : _a.filter(isString);
+    const descriptions = (_b = definition['x-enum-descriptions']) === null || _b === void 0 ? void 0 : _b.filter(isString);
     return enumerators.map((enumerator, index) => ({
-        name: names?.[index] || enumerator.name,
-        description: descriptions?.[index] || enumerator.description,
+        name: (names === null || names === void 0 ? void 0 : names[index]) || enumerator.name,
+        description: (descriptions === null || descriptions === void 0 ? void 0 : descriptions[index]) || enumerator.description,
         value: enumerator.value,
         type: enumerator.type,
     }));
@@ -177,7 +175,7 @@ const getType$1 = (type = 'any', format) => {
     const typeWithoutNamespace = decodeURIComponent(stripNamespace$1(type));
     if (/\[.*\]$/g.test(typeWithoutNamespace)) {
         const matches = typeWithoutNamespace.match(/(.*?)\[(.*)\]$/);
-        if (matches?.length) {
+        if (matches === null || matches === void 0 ? void 0 : matches.length) {
             const match1 = getType$1(encode$1(matches[1]));
             const match2 = getType$1(encode$1(matches[2]));
             if (match1.type === 'any[]') {
@@ -211,11 +209,12 @@ const getType$1 = (type = 'any', format) => {
 };
 
 const getModelProperties$1 = (openApi, definition, getModel) => {
+    var _a;
     const models = [];
     for (const propertyName in definition.properties) {
         if (definition.properties.hasOwnProperty(propertyName)) {
             const property = definition.properties[propertyName];
-            const propertyRequired = !!definition.required?.includes(propertyName);
+            const propertyRequired = !!((_a = definition.required) === null || _a === void 0 ? void 0 : _a.includes(propertyName));
             if (property.$ref) {
                 const model = getType$1(property.$ref);
                 models.push({
@@ -400,6 +399,7 @@ const getModelComposition$1 = (openApi, definition, definitions, type, getModel)
 };
 
 const getModel$1 = (openApi, definition, isDefinition = false, name = '') => {
+    var _a;
     const model = {
         name,
         export: 'interface',
@@ -493,7 +493,7 @@ const getModel$1 = (openApi, definition, isDefinition = false, name = '') => {
             return model;
         }
     }
-    if (definition.allOf?.length) {
+    if ((_a = definition.allOf) === null || _a === void 0 ? void 0 : _a.length) {
         const composition = getModelComposition$1(openApi, definition, definition.allOf, 'all-of', getModel$1);
         model.export = composition.type;
         model.imports.push(...composition.imports);
@@ -549,7 +549,8 @@ const getModels$1 = (openApi) => {
  * @param openApi
  */
 const getServer$1 = (openApi) => {
-    const scheme = openApi.schemes?.[0] || 'http';
+    var _a;
+    const scheme = ((_a = openApi.schemes) === null || _a === void 0 ? void 0 : _a[0]) || 'http';
     const host = openApi.host;
     const basePath = openApi.basePath || '';
     const url = host ? `${scheme}://${host}${basePath}` : basePath;
@@ -595,6 +596,7 @@ const getOperationName$1 = (url, method, operationId) => {
 };
 
 const getOperationParameterDefault = (parameter, operationParameter) => {
+    var _a;
     if (parameter.default === undefined) {
         return undefined;
     }
@@ -606,7 +608,7 @@ const getOperationParameterDefault = (parameter, operationParameter) => {
         case 'int':
         case 'integer':
         case 'number':
-            if (operationParameter.export === 'enum' && operationParameter.enum?.[parameter.default]) {
+            if (operationParameter.export === 'enum' && ((_a = operationParameter.enum) === null || _a === void 0 ? void 0 : _a[parameter.default])) {
                 return operationParameter.enum[parameter.default].value;
             }
             return parameter.default;
@@ -639,6 +641,7 @@ const getOperationParameterName$1 = (value) => {
 };
 
 const getOperationParameter$1 = (openApi, parameter) => {
+    var _a;
     const operationParameter = {
         in: parameter.in,
         prop: parameter.name,
@@ -715,7 +718,7 @@ const getOperationParameter$1 = (openApi, parameter) => {
     }
     let schema = parameter.schema;
     if (schema) {
-        if (schema.$ref?.startsWith('#/parameters/')) {
+        if ((_a = schema.$ref) === null || _a === void 0 ? void 0 : _a.startsWith('#/parameters/')) {
             schema = getRef$1(openApi, schema);
         }
         if (schema.$ref) {
@@ -818,6 +821,7 @@ const getOperationResponseHeader$1 = (operationResponses) => {
 };
 
 const getOperationResponse$1 = (openApi, response, responseCode) => {
+    var _a;
     const operationResponse = {
         in: 'response',
         name: '',
@@ -843,7 +847,7 @@ const getOperationResponse$1 = (openApi, response, responseCode) => {
     // and then we need to parse the schema!
     let schema = response.schema;
     if (schema) {
-        if (schema.$ref?.startsWith('#/responses/')) {
+        if ((_a = schema.$ref) === null || _a === void 0 ? void 0 : _a.startsWith('#/responses/')) {
             schema = getRef$1(openApi, schema);
         }
         if (schema.$ref) {
@@ -1059,6 +1063,7 @@ const getOperation$1 = (openApi, url, method, tag, op, pathParams) => {
  * Get the OpenAPI services
  */
 const getServices$1 = (openApi) => {
+    var _a;
     const services = new Map();
     for (const url in openApi.paths) {
         if (openApi.paths.hasOwnProperty(url)) {
@@ -1078,7 +1083,7 @@ const getServices$1 = (openApi) => {
                         case 'patch':
                             // Each method contains an OpenAPI operation, we parse the operation
                             const op = path[method];
-                            const tags = op.tags?.length ? op.tags.filter(unique) : ['Default'];
+                            const tags = ((_a = op.tags) === null || _a === void 0 ? void 0 : _a.length) ? op.tags.filter(unique) : ['Default'];
                             tags.forEach(tag => {
                                 const operation = getOperation$1(openApi, url, method, tag, op, pathParams);
                                 // If we have already declared a service, then we should fetch that and
@@ -1131,11 +1136,12 @@ const parse$1 = (openApi) => {
  * @param definition
  */
 const extendEnum = (enumerators, definition) => {
-    const names = definition['x-enum-varnames']?.filter(isString);
-    const descriptions = definition['x-enum-descriptions']?.filter(isString);
+    var _a, _b;
+    const names = (_a = definition['x-enum-varnames']) === null || _a === void 0 ? void 0 : _a.filter(isString);
+    const descriptions = (_b = definition['x-enum-descriptions']) === null || _b === void 0 ? void 0 : _b.filter(isString);
     return enumerators.map((enumerator, index) => ({
-        name: names?.[index] || enumerator.name,
-        description: descriptions?.[index] || enumerator.description,
+        name: (names === null || names === void 0 ? void 0 : names[index]) || enumerator.name,
+        description: (descriptions === null || descriptions === void 0 ? void 0 : descriptions[index]) || enumerator.description,
         value: enumerator.value,
         type: enumerator.type,
     }));
@@ -1200,12 +1206,13 @@ const inverseDictionary = (map) => {
     return m2;
 };
 const findOneOfParentDiscriminator = (openApi, parent) => {
+    var _a;
     if (openApi.components && parent) {
         for (const definitionName in openApi.components.schemas) {
             if (openApi.components.schemas.hasOwnProperty(definitionName)) {
                 const schema = openApi.components.schemas[definitionName];
                 if (schema.discriminator &&
-                    schema.oneOf?.length &&
+                    ((_a = schema.oneOf) === null || _a === void 0 ? void 0 : _a.length) &&
                     schema.oneOf.some(definition => definition.$ref && stripNamespace(definition.$ref) == parent.name)) {
                     return schema.discriminator;
                 }
@@ -1313,7 +1320,7 @@ const getType = (type = 'any', format) => {
     const typeWithoutNamespace = decodeURIComponent(stripNamespace(type));
     if (/\[.*\]$/g.test(typeWithoutNamespace)) {
         const matches = typeWithoutNamespace.match(/(.*?)\[(.*)\]$/);
-        if (matches?.length) {
+        if (matches === null || matches === void 0 ? void 0 : matches.length) {
             const match1 = getType(encode(matches[1]));
             const match2 = getType(encode(matches[2]));
             if (match1.type === 'any[]') {
@@ -1347,15 +1354,17 @@ const getType = (type = 'any', format) => {
 };
 
 const getModelProperties = (openApi, definition, getModel, parent) => {
+    var _a;
     const models = [];
     const discriminator = findOneOfParentDiscriminator(openApi, parent);
     for (const propertyName in definition.properties) {
         if (definition.properties.hasOwnProperty(propertyName)) {
             const property = definition.properties[propertyName];
-            const propertyRequired = !!definition.required?.includes(propertyName);
+            const propertyRequired = !!((_a = definition.required) === null || _a === void 0 ? void 0 : _a.includes(propertyName));
             const propertyValues = {
                 name: escapeName(propertyName),
                 description: property.description || null,
+                deprecated: property.deprecated === true,
                 isDefinition: false,
                 isReadOnly: property.readOnly === true,
                 isRequired: propertyRequired,
@@ -1374,7 +1383,7 @@ const getModelProperties = (openApi, definition, getModel, parent) => {
                 minProperties: property.minProperties,
                 pattern: getPattern(property.pattern),
             };
-            if (parent && discriminator?.propertyName == propertyName) {
+            if (parent && (discriminator === null || discriminator === void 0 ? void 0 : discriminator.propertyName) == propertyName) {
                 models.push({
                     export: 'reference',
                     type: 'string',
@@ -1538,6 +1547,7 @@ const getModelComposition = (openApi, definition, definitions, type, getModel) =
 };
 
 const getModelDefault = (definition, model) => {
+    var _a;
     if (definition.default === undefined) {
         return undefined;
     }
@@ -1549,7 +1559,7 @@ const getModelDefault = (definition, model) => {
         case 'int':
         case 'integer':
         case 'number':
-            if (model?.export === 'enum' && model.enum?.[definition.default]) {
+            if ((model === null || model === void 0 ? void 0 : model.export) === 'enum' && ((_a = model.enum) === null || _a === void 0 ? void 0 : _a[definition.default])) {
                 return model.enum[definition.default].value;
             }
             return definition.default;
@@ -1569,6 +1579,7 @@ const getModelDefault = (definition, model) => {
 };
 
 const getModel = (openApi, definition, isDefinition = false, name = '') => {
+    var _a, _b, _c;
     const model = {
         name,
         export: 'interface',
@@ -1577,6 +1588,7 @@ const getModel = (openApi, definition, isDefinition = false, name = '') => {
         template: null,
         link: null,
         description: definition.description || null,
+        deprecated: definition.deprecated === true,
         isDefinition,
         isReadOnly: definition.readOnly === true,
         isNullable: definition.nullable === true,
@@ -1668,7 +1680,7 @@ const getModel = (openApi, definition, isDefinition = false, name = '') => {
             return model;
         }
     }
-    if (definition.oneOf?.length) {
+    if ((_a = definition.oneOf) === null || _a === void 0 ? void 0 : _a.length) {
         const composition = getModelComposition(openApi, definition, definition.oneOf, 'one-of', getModel);
         model.export = composition.type;
         model.imports.push(...composition.imports);
@@ -1676,7 +1688,7 @@ const getModel = (openApi, definition, isDefinition = false, name = '') => {
         model.enums.push(...composition.enums);
         return model;
     }
-    if (definition.anyOf?.length) {
+    if ((_b = definition.anyOf) === null || _b === void 0 ? void 0 : _b.length) {
         const composition = getModelComposition(openApi, definition, definition.anyOf, 'any-of', getModel);
         model.export = composition.type;
         model.imports.push(...composition.imports);
@@ -1684,7 +1696,7 @@ const getModel = (openApi, definition, isDefinition = false, name = '') => {
         model.enums.push(...composition.enums);
         return model;
     }
-    if (definition.allOf?.length) {
+    if ((_c = definition.allOf) === null || _c === void 0 ? void 0 : _c.length) {
         const composition = getModelComposition(openApi, definition, definition.allOf, 'all-of', getModel);
         model.export = composition.type;
         model.imports.push(...composition.imports);
@@ -1741,9 +1753,10 @@ const getModels = (openApi) => {
 };
 
 const getServer = (openApi) => {
-    const server = openApi.servers?.[0];
-    const variables = server?.variables || {};
-    let url = server?.url || '';
+    var _a;
+    const server = (_a = openApi.servers) === null || _a === void 0 ? void 0 : _a[0];
+    const variables = (server === null || server === void 0 ? void 0 : server.variables) || {};
+    let url = (server === null || server === void 0 ? void 0 : server.url) || '';
     for (const variable in variables) {
         if (variables.hasOwnProperty(variable)) {
             url = url.replace(`{${variable}}`, variables[variable].default);
@@ -1796,6 +1809,7 @@ const getOperationParameterName = (value) => {
 };
 
 const getOperationParameter = (openApi, parameter) => {
+    var _a;
     const operationParameter = {
         in: parameter.in,
         prop: parameter.name,
@@ -1806,6 +1820,7 @@ const getOperationParameter = (openApi, parameter) => {
         template: null,
         link: null,
         description: parameter.description || null,
+        deprecated: parameter.deprecated === true,
         isDefinition: false,
         isReadOnly: false,
         isRequired: parameter.required === true,
@@ -1827,7 +1842,7 @@ const getOperationParameter = (openApi, parameter) => {
     }
     let schema = parameter.schema;
     if (schema) {
-        if (schema.$ref?.startsWith('#/components/parameters/')) {
+        if ((_a = schema.$ref) === null || _a === void 0 ? void 0 : _a.startsWith('#/components/parameters/')) {
             schema = getRef(openApi, schema);
         }
         if (schema.$ref) {
@@ -1943,14 +1958,14 @@ const getContent = (openApi, content) => {
         const cleanMediaType = mediaType.split(';')[0].trim();
         return BASIC_MEDIA_TYPES.includes(cleanMediaType);
     })
-        .find(mediaType => isDefined(content[mediaType]?.schema));
+        .find(mediaType => { var _a; return isDefined((_a = content[mediaType]) === null || _a === void 0 ? void 0 : _a.schema); });
     if (basicMediaTypeWithSchema) {
         return {
             mediaType: basicMediaTypeWithSchema,
             schema: content[basicMediaTypeWithSchema].schema,
         };
     }
-    const firstMediaTypeWithSchema = Object.keys(content).find(mediaType => isDefined(content[mediaType]?.schema));
+    const firstMediaTypeWithSchema = Object.keys(content).find(mediaType => { var _a; return isDefined((_a = content[mediaType]) === null || _a === void 0 ? void 0 : _a.schema); });
     if (firstMediaTypeWithSchema) {
         return {
             mediaType: firstMediaTypeWithSchema,
@@ -2049,6 +2064,7 @@ const getOperationResponseHeader = (operationResponses) => {
 };
 
 const getOperationResponse = (openApi, response, responseCode) => {
+    var _a;
     const operationResponse = {
         in: 'response',
         name: '',
@@ -2071,7 +2087,7 @@ const getOperationResponse = (openApi, response, responseCode) => {
     if (response.content) {
         const content = getContent(openApi, response.content);
         if (content) {
-            if (content.schema.$ref?.startsWith('#/components/responses/')) {
+            if ((_a = content.schema.$ref) === null || _a === void 0 ? void 0 : _a.startsWith('#/components/responses/')) {
                 content.schema = getRef(openApi, content.schema);
             }
             if (content.schema.$ref) {
@@ -2295,6 +2311,7 @@ const getOperation = (openApi, url, method, tag, op, pathParams) => {
  * Get the OpenAPI services
  */
 const getServices = (openApi) => {
+    var _a;
     const services = new Map();
     for (const url in openApi.paths) {
         if (openApi.paths.hasOwnProperty(url)) {
@@ -2314,7 +2331,7 @@ const getServices = (openApi) => {
                         case 'patch':
                             // Each method contains an OpenAPI operation, we parse the operation
                             const op = path[method];
-                            const tags = op.tags?.length ? op.tags.filter(unique) : ['Default'];
+                            const tags = ((_a = op.tags) === null || _a === void 0 ? void 0 : _a.length) ? op.tags.filter(unique) : ['Default'];
                             tags.forEach(tag => {
                                 const operation = getOperation(openApi, url, method, tag, op, pathParams);
                                 // If we have already declared a service, then we should fetch that and
@@ -2510,7 +2527,7 @@ const postProcessServiceOperations = (service, options) => {
             clone.name = `${name}${index}`;
         }
         names.set(name, index + 1);
-        if (options?.useJsonld) {
+        if (options === null || options === void 0 ? void 0 : options.useJsonld) {
             postProcessServiceOperationsJsonld(clone);
         }
         return clone;
@@ -2531,7 +2548,7 @@ const postProcessService = (service, options) => {
  * @param options
  */
 const postProcessClient = (client, options) => {
-    if (options?.useJsonld) {
+    if (options === null || options === void 0 ? void 0 : options.useJsonld) {
         client.models = client.models.filter(model => model.name.includes('jsonld'));
     }
     return {
@@ -2540,6 +2557,1400 @@ const postProcessClient = (client, options) => {
         services: client.services.map(service => postProcessService(service, options)),
     };
 };
+
+var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+var handlebars_runtime = {exports: {}};
+
+var base = {};
+
+var utils = {};
+
+utils.__esModule = true;
+utils.extend = extend;
+utils.indexOf = indexOf;
+utils.escapeExpression = escapeExpression;
+utils.isEmpty = isEmpty;
+utils.createFrame = createFrame;
+utils.blockParams = blockParams;
+utils.appendContextPath = appendContextPath;
+var escape = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#x27;',
+  '`': '&#x60;',
+  '=': '&#x3D;'
+};
+
+var badChars = /[&<>"'`=]/g,
+    possible = /[&<>"'`=]/;
+
+function escapeChar(chr) {
+  return escape[chr];
+}
+
+function extend(obj /* , ...source */) {
+  for (var i = 1; i < arguments.length; i++) {
+    for (var key in arguments[i]) {
+      if (Object.prototype.hasOwnProperty.call(arguments[i], key)) {
+        obj[key] = arguments[i][key];
+      }
+    }
+  }
+
+  return obj;
+}
+
+var toString = Object.prototype.toString;
+
+utils.toString = toString;
+// Sourced from lodash
+// https://github.com/bestiejs/lodash/blob/master/LICENSE.txt
+/* eslint-disable func-style */
+var isFunction = function isFunction(value) {
+  return typeof value === 'function';
+};
+// fallback for older versions of Chrome and Safari
+/* istanbul ignore next */
+if (isFunction(/x/)) {
+  utils.isFunction = isFunction = function (value) {
+    return typeof value === 'function' && toString.call(value) === '[object Function]';
+  };
+}
+utils.isFunction = isFunction;
+
+/* eslint-enable func-style */
+
+/* istanbul ignore next */
+var isArray = Array.isArray || function (value) {
+  return value && typeof value === 'object' ? toString.call(value) === '[object Array]' : false;
+};
+
+utils.isArray = isArray;
+// Older IE versions do not directly support indexOf so we must implement our own, sadly.
+
+function indexOf(array, value) {
+  for (var i = 0, len = array.length; i < len; i++) {
+    if (array[i] === value) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function escapeExpression(string) {
+  if (typeof string !== 'string') {
+    // don't escape SafeStrings, since they're already safe
+    if (string && string.toHTML) {
+      return string.toHTML();
+    } else if (string == null) {
+      return '';
+    } else if (!string) {
+      return string + '';
+    }
+
+    // Force a string conversion as this will be done by the append regardless and
+    // the regex test will do this transparently behind the scenes, causing issues if
+    // an object's to string has escaped characters in it.
+    string = '' + string;
+  }
+
+  if (!possible.test(string)) {
+    return string;
+  }
+  return string.replace(badChars, escapeChar);
+}
+
+function isEmpty(value) {
+  if (!value && value !== 0) {
+    return true;
+  } else if (isArray(value) && value.length === 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function createFrame(object) {
+  var frame = extend({}, object);
+  frame._parent = object;
+  return frame;
+}
+
+function blockParams(params, ids) {
+  params.path = ids;
+  return params;
+}
+
+function appendContextPath(contextPath, id) {
+  return (contextPath ? contextPath + '.' : '') + id;
+}
+
+var exception = {exports: {}};
+
+(function (module, exports) {
+
+	exports.__esModule = true;
+	var errorProps = ['description', 'fileName', 'lineNumber', 'endLineNumber', 'message', 'name', 'number', 'stack'];
+
+	function Exception(message, node) {
+	  var loc = node && node.loc,
+	      line = undefined,
+	      endLineNumber = undefined,
+	      column = undefined,
+	      endColumn = undefined;
+
+	  if (loc) {
+	    line = loc.start.line;
+	    endLineNumber = loc.end.line;
+	    column = loc.start.column;
+	    endColumn = loc.end.column;
+
+	    message += ' - ' + line + ':' + column;
+	  }
+
+	  var tmp = Error.prototype.constructor.call(this, message);
+
+	  // Unfortunately errors are not enumerable in Chrome (at least), so `for prop in tmp` doesn't work.
+	  for (var idx = 0; idx < errorProps.length; idx++) {
+	    this[errorProps[idx]] = tmp[errorProps[idx]];
+	  }
+
+	  /* istanbul ignore else */
+	  if (Error.captureStackTrace) {
+	    Error.captureStackTrace(this, Exception);
+	  }
+
+	  try {
+	    if (loc) {
+	      this.lineNumber = line;
+	      this.endLineNumber = endLineNumber;
+
+	      // Work around issue under safari where we can't directly set the column value
+	      /* istanbul ignore next */
+	      if (Object.defineProperty) {
+	        Object.defineProperty(this, 'column', {
+	          value: column,
+	          enumerable: true
+	        });
+	        Object.defineProperty(this, 'endColumn', {
+	          value: endColumn,
+	          enumerable: true
+	        });
+	      } else {
+	        this.column = column;
+	        this.endColumn = endColumn;
+	      }
+	    }
+	  } catch (nop) {
+	    /* Ignore if the browser is very particular */
+	  }
+	}
+
+	Exception.prototype = new Error();
+
+	exports['default'] = Exception;
+	module.exports = exports['default'];
+	
+} (exception, exception.exports));
+
+var helpers = {};
+
+var blockHelperMissing = {exports: {}};
+
+(function (module, exports) {
+
+	exports.__esModule = true;
+
+	var _utils = utils;
+
+	exports['default'] = function (instance) {
+	  instance.registerHelper('blockHelperMissing', function (context, options) {
+	    var inverse = options.inverse,
+	        fn = options.fn;
+
+	    if (context === true) {
+	      return fn(this);
+	    } else if (context === false || context == null) {
+	      return inverse(this);
+	    } else if (_utils.isArray(context)) {
+	      if (context.length > 0) {
+	        if (options.ids) {
+	          options.ids = [options.name];
+	        }
+
+	        return instance.helpers.each(context, options);
+	      } else {
+	        return inverse(this);
+	      }
+	    } else {
+	      if (options.data && options.ids) {
+	        var data = _utils.createFrame(options.data);
+	        data.contextPath = _utils.appendContextPath(options.data.contextPath, options.name);
+	        options = { data: data };
+	      }
+
+	      return fn(context, options);
+	    }
+	  });
+	};
+
+	module.exports = exports['default'];
+	
+} (blockHelperMissing, blockHelperMissing.exports));
+
+var each = {exports: {}};
+
+(function (module, exports) {
+
+	exports.__esModule = true;
+	// istanbul ignore next
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+	var _utils = utils;
+
+	var _exception = exception.exports;
+
+	var _exception2 = _interopRequireDefault(_exception);
+
+	exports['default'] = function (instance) {
+	  instance.registerHelper('each', function (context, options) {
+	    if (!options) {
+	      throw new _exception2['default']('Must pass iterator to #each');
+	    }
+
+	    var fn = options.fn,
+	        inverse = options.inverse,
+	        i = 0,
+	        ret = '',
+	        data = undefined,
+	        contextPath = undefined;
+
+	    if (options.data && options.ids) {
+	      contextPath = _utils.appendContextPath(options.data.contextPath, options.ids[0]) + '.';
+	    }
+
+	    if (_utils.isFunction(context)) {
+	      context = context.call(this);
+	    }
+
+	    if (options.data) {
+	      data = _utils.createFrame(options.data);
+	    }
+
+	    function execIteration(field, index, last) {
+	      if (data) {
+	        data.key = field;
+	        data.index = index;
+	        data.first = index === 0;
+	        data.last = !!last;
+
+	        if (contextPath) {
+	          data.contextPath = contextPath + field;
+	        }
+	      }
+
+	      ret = ret + fn(context[field], {
+	        data: data,
+	        blockParams: _utils.blockParams([context[field], field], [contextPath + field, null])
+	      });
+	    }
+
+	    if (context && typeof context === 'object') {
+	      if (_utils.isArray(context)) {
+	        for (var j = context.length; i < j; i++) {
+	          if (i in context) {
+	            execIteration(i, i, i === context.length - 1);
+	          }
+	        }
+	      } else if (commonjsGlobal.Symbol && context[commonjsGlobal.Symbol.iterator]) {
+	        var newContext = [];
+	        var iterator = context[commonjsGlobal.Symbol.iterator]();
+	        for (var it = iterator.next(); !it.done; it = iterator.next()) {
+	          newContext.push(it.value);
+	        }
+	        context = newContext;
+	        for (var j = context.length; i < j; i++) {
+	          execIteration(i, i, i === context.length - 1);
+	        }
+	      } else {
+	        (function () {
+	          var priorKey = undefined;
+
+	          Object.keys(context).forEach(function (key) {
+	            // We're running the iterations one step out of sync so we can detect
+	            // the last iteration without have to scan the object twice and create
+	            // an itermediate keys array.
+	            if (priorKey !== undefined) {
+	              execIteration(priorKey, i - 1);
+	            }
+	            priorKey = key;
+	            i++;
+	          });
+	          if (priorKey !== undefined) {
+	            execIteration(priorKey, i - 1, true);
+	          }
+	        })();
+	      }
+	    }
+
+	    if (i === 0) {
+	      ret = inverse(this);
+	    }
+
+	    return ret;
+	  });
+	};
+
+	module.exports = exports['default'];
+	
+} (each, each.exports));
+
+var helperMissing = {exports: {}};
+
+(function (module, exports) {
+
+	exports.__esModule = true;
+	// istanbul ignore next
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+	var _exception = exception.exports;
+
+	var _exception2 = _interopRequireDefault(_exception);
+
+	exports['default'] = function (instance) {
+	  instance.registerHelper('helperMissing', function () /* [args, ]options */{
+	    if (arguments.length === 1) {
+	      // A missing field in a {{foo}} construct.
+	      return undefined;
+	    } else {
+	      // Someone is actually trying to call something, blow up.
+	      throw new _exception2['default']('Missing helper: "' + arguments[arguments.length - 1].name + '"');
+	    }
+	  });
+	};
+
+	module.exports = exports['default'];
+	
+} (helperMissing, helperMissing.exports));
+
+var _if = {exports: {}};
+
+(function (module, exports) {
+
+	exports.__esModule = true;
+	// istanbul ignore next
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+	var _utils = utils;
+
+	var _exception = exception.exports;
+
+	var _exception2 = _interopRequireDefault(_exception);
+
+	exports['default'] = function (instance) {
+	  instance.registerHelper('if', function (conditional, options) {
+	    if (arguments.length != 2) {
+	      throw new _exception2['default']('#if requires exactly one argument');
+	    }
+	    if (_utils.isFunction(conditional)) {
+	      conditional = conditional.call(this);
+	    }
+
+	    // Default behavior is to render the positive path if the value is truthy and not empty.
+	    // The `includeZero` option may be set to treat the condtional as purely not empty based on the
+	    // behavior of isEmpty. Effectively this determines if 0 is handled by the positive path or negative.
+	    if (!options.hash.includeZero && !conditional || _utils.isEmpty(conditional)) {
+	      return options.inverse(this);
+	    } else {
+	      return options.fn(this);
+	    }
+	  });
+
+	  instance.registerHelper('unless', function (conditional, options) {
+	    if (arguments.length != 2) {
+	      throw new _exception2['default']('#unless requires exactly one argument');
+	    }
+	    return instance.helpers['if'].call(this, conditional, {
+	      fn: options.inverse,
+	      inverse: options.fn,
+	      hash: options.hash
+	    });
+	  });
+	};
+
+	module.exports = exports['default'];
+	
+} (_if, _if.exports));
+
+var log$1 = {exports: {}};
+
+(function (module, exports) {
+
+	exports.__esModule = true;
+
+	exports['default'] = function (instance) {
+	  instance.registerHelper('log', function () /* message, options */{
+	    var args = [undefined],
+	        options = arguments[arguments.length - 1];
+	    for (var i = 0; i < arguments.length - 1; i++) {
+	      args.push(arguments[i]);
+	    }
+
+	    var level = 1;
+	    if (options.hash.level != null) {
+	      level = options.hash.level;
+	    } else if (options.data && options.data.level != null) {
+	      level = options.data.level;
+	    }
+	    args[0] = level;
+
+	    instance.log.apply(instance, args);
+	  });
+	};
+
+	module.exports = exports['default'];
+	
+} (log$1, log$1.exports));
+
+var lookup = {exports: {}};
+
+(function (module, exports) {
+
+	exports.__esModule = true;
+
+	exports['default'] = function (instance) {
+	  instance.registerHelper('lookup', function (obj, field, options) {
+	    if (!obj) {
+	      // Note for 5.0: Change to "obj == null" in 5.0
+	      return obj;
+	    }
+	    return options.lookupProperty(obj, field);
+	  });
+	};
+
+	module.exports = exports['default'];
+	
+} (lookup, lookup.exports));
+
+var _with = {exports: {}};
+
+(function (module, exports) {
+
+	exports.__esModule = true;
+	// istanbul ignore next
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+	var _utils = utils;
+
+	var _exception = exception.exports;
+
+	var _exception2 = _interopRequireDefault(_exception);
+
+	exports['default'] = function (instance) {
+	  instance.registerHelper('with', function (context, options) {
+	    if (arguments.length != 2) {
+	      throw new _exception2['default']('#with requires exactly one argument');
+	    }
+	    if (_utils.isFunction(context)) {
+	      context = context.call(this);
+	    }
+
+	    var fn = options.fn;
+
+	    if (!_utils.isEmpty(context)) {
+	      var data = options.data;
+	      if (options.data && options.ids) {
+	        data = _utils.createFrame(options.data);
+	        data.contextPath = _utils.appendContextPath(options.data.contextPath, options.ids[0]);
+	      }
+
+	      return fn(context, {
+	        data: data,
+	        blockParams: _utils.blockParams([context], [data && data.contextPath])
+	      });
+	    } else {
+	      return options.inverse(this);
+	    }
+	  });
+	};
+
+	module.exports = exports['default'];
+	
+} (_with, _with.exports));
+
+helpers.__esModule = true;
+helpers.registerDefaultHelpers = registerDefaultHelpers;
+helpers.moveHelperToHooks = moveHelperToHooks;
+// istanbul ignore next
+
+function _interopRequireDefault$3(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _helpersBlockHelperMissing = blockHelperMissing.exports;
+
+var _helpersBlockHelperMissing2 = _interopRequireDefault$3(_helpersBlockHelperMissing);
+
+var _helpersEach = each.exports;
+
+var _helpersEach2 = _interopRequireDefault$3(_helpersEach);
+
+var _helpersHelperMissing = helperMissing.exports;
+
+var _helpersHelperMissing2 = _interopRequireDefault$3(_helpersHelperMissing);
+
+var _helpersIf = _if.exports;
+
+var _helpersIf2 = _interopRequireDefault$3(_helpersIf);
+
+var _helpersLog = log$1.exports;
+
+var _helpersLog2 = _interopRequireDefault$3(_helpersLog);
+
+var _helpersLookup = lookup.exports;
+
+var _helpersLookup2 = _interopRequireDefault$3(_helpersLookup);
+
+var _helpersWith = _with.exports;
+
+var _helpersWith2 = _interopRequireDefault$3(_helpersWith);
+
+function registerDefaultHelpers(instance) {
+  _helpersBlockHelperMissing2['default'](instance);
+  _helpersEach2['default'](instance);
+  _helpersHelperMissing2['default'](instance);
+  _helpersIf2['default'](instance);
+  _helpersLog2['default'](instance);
+  _helpersLookup2['default'](instance);
+  _helpersWith2['default'](instance);
+}
+
+function moveHelperToHooks(instance, helperName, keepHelper) {
+  if (instance.helpers[helperName]) {
+    instance.hooks[helperName] = instance.helpers[helperName];
+    if (!keepHelper) {
+      delete instance.helpers[helperName];
+    }
+  }
+}
+
+var decorators = {};
+
+var inline = {exports: {}};
+
+(function (module, exports) {
+
+	exports.__esModule = true;
+
+	var _utils = utils;
+
+	exports['default'] = function (instance) {
+	  instance.registerDecorator('inline', function (fn, props, container, options) {
+	    var ret = fn;
+	    if (!props.partials) {
+	      props.partials = {};
+	      ret = function (context, options) {
+	        // Create a new partials stack frame prior to exec.
+	        var original = container.partials;
+	        container.partials = _utils.extend({}, original, props.partials);
+	        var ret = fn(context, options);
+	        container.partials = original;
+	        return ret;
+	      };
+	    }
+
+	    props.partials[options.args[0]] = options.fn;
+
+	    return ret;
+	  });
+	};
+
+	module.exports = exports['default'];
+	
+} (inline, inline.exports));
+
+decorators.__esModule = true;
+decorators.registerDefaultDecorators = registerDefaultDecorators;
+// istanbul ignore next
+
+function _interopRequireDefault$2(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _decoratorsInline = inline.exports;
+
+var _decoratorsInline2 = _interopRequireDefault$2(_decoratorsInline);
+
+function registerDefaultDecorators(instance) {
+  _decoratorsInline2['default'](instance);
+}
+
+var logger$1 = {exports: {}};
+
+(function (module, exports) {
+
+	exports.__esModule = true;
+
+	var _utils = utils;
+
+	var logger = {
+	  methodMap: ['debug', 'info', 'warn', 'error'],
+	  level: 'info',
+
+	  // Maps a given level value to the `methodMap` indexes above.
+	  lookupLevel: function lookupLevel(level) {
+	    if (typeof level === 'string') {
+	      var levelMap = _utils.indexOf(logger.methodMap, level.toLowerCase());
+	      if (levelMap >= 0) {
+	        level = levelMap;
+	      } else {
+	        level = parseInt(level, 10);
+	      }
+	    }
+
+	    return level;
+	  },
+
+	  // Can be overridden in the host environment
+	  log: function log(level) {
+	    level = logger.lookupLevel(level);
+
+	    if (typeof console !== 'undefined' && logger.lookupLevel(logger.level) <= level) {
+	      var method = logger.methodMap[level];
+	      // eslint-disable-next-line no-console
+	      if (!console[method]) {
+	        method = 'log';
+	      }
+
+	      for (var _len = arguments.length, message = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+	        message[_key - 1] = arguments[_key];
+	      }
+
+	      console[method].apply(console, message); // eslint-disable-line no-console
+	    }
+	  }
+	};
+
+	exports['default'] = logger;
+	module.exports = exports['default'];
+	
+} (logger$1, logger$1.exports));
+
+var protoAccess = {};
+
+var createNewLookupObject$1 = {};
+
+createNewLookupObject$1.__esModule = true;
+createNewLookupObject$1.createNewLookupObject = createNewLookupObject;
+
+var _utils$2 = utils;
+
+/**
+ * Create a new object with "null"-prototype to avoid truthy results on prototype properties.
+ * The resulting object can be used with "object[property]" to check if a property exists
+ * @param {...object} sources a varargs parameter of source objects that will be merged
+ * @returns {object}
+ */
+
+function createNewLookupObject() {
+  for (var _len = arguments.length, sources = Array(_len), _key = 0; _key < _len; _key++) {
+    sources[_key] = arguments[_key];
+  }
+
+  return _utils$2.extend.apply(undefined, [Object.create(null)].concat(sources));
+}
+
+protoAccess.__esModule = true;
+protoAccess.createProtoAccessControl = createProtoAccessControl;
+protoAccess.resultIsAllowed = resultIsAllowed;
+protoAccess.resetLoggedProperties = resetLoggedProperties;
+// istanbul ignore next
+
+function _interopRequireWildcard$1(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+
+var _createNewLookupObject = createNewLookupObject$1;
+
+var _logger$1 = logger$1.exports;
+
+var logger = _interopRequireWildcard$1(_logger$1);
+
+var loggedProperties = Object.create(null);
+
+function createProtoAccessControl(runtimeOptions) {
+  var defaultMethodWhiteList = Object.create(null);
+  defaultMethodWhiteList['constructor'] = false;
+  defaultMethodWhiteList['__defineGetter__'] = false;
+  defaultMethodWhiteList['__defineSetter__'] = false;
+  defaultMethodWhiteList['__lookupGetter__'] = false;
+
+  var defaultPropertyWhiteList = Object.create(null);
+  // eslint-disable-next-line no-proto
+  defaultPropertyWhiteList['__proto__'] = false;
+
+  return {
+    properties: {
+      whitelist: _createNewLookupObject.createNewLookupObject(defaultPropertyWhiteList, runtimeOptions.allowedProtoProperties),
+      defaultValue: runtimeOptions.allowProtoPropertiesByDefault
+    },
+    methods: {
+      whitelist: _createNewLookupObject.createNewLookupObject(defaultMethodWhiteList, runtimeOptions.allowedProtoMethods),
+      defaultValue: runtimeOptions.allowProtoMethodsByDefault
+    }
+  };
+}
+
+function resultIsAllowed(result, protoAccessControl, propertyName) {
+  if (typeof result === 'function') {
+    return checkWhiteList(protoAccessControl.methods, propertyName);
+  } else {
+    return checkWhiteList(protoAccessControl.properties, propertyName);
+  }
+}
+
+function checkWhiteList(protoAccessControlForType, propertyName) {
+  if (protoAccessControlForType.whitelist[propertyName] !== undefined) {
+    return protoAccessControlForType.whitelist[propertyName] === true;
+  }
+  if (protoAccessControlForType.defaultValue !== undefined) {
+    return protoAccessControlForType.defaultValue;
+  }
+  logUnexpecedPropertyAccessOnce(propertyName);
+  return false;
+}
+
+function logUnexpecedPropertyAccessOnce(propertyName) {
+  if (loggedProperties[propertyName] !== true) {
+    loggedProperties[propertyName] = true;
+    logger.log('error', 'Handlebars: Access has been denied to resolve the property "' + propertyName + '" because it is not an "own property" of its parent.\n' + 'You can add a runtime option to disable the check or this warning:\n' + 'See https://handlebarsjs.com/api-reference/runtime-options.html#options-to-control-prototype-access for details');
+  }
+}
+
+function resetLoggedProperties() {
+  Object.keys(loggedProperties).forEach(function (propertyName) {
+    delete loggedProperties[propertyName];
+  });
+}
+
+base.__esModule = true;
+base.HandlebarsEnvironment = HandlebarsEnvironment;
+// istanbul ignore next
+
+function _interopRequireDefault$1(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _utils$1 = utils;
+
+var _exception$1 = exception.exports;
+
+var _exception2$1 = _interopRequireDefault$1(_exception$1);
+
+var _helpers$1 = helpers;
+
+var _decorators = decorators;
+
+var _logger = logger$1.exports;
+
+var _logger2 = _interopRequireDefault$1(_logger);
+
+var _internalProtoAccess$1 = protoAccess;
+
+var VERSION = '4.7.7';
+base.VERSION = VERSION;
+var COMPILER_REVISION = 8;
+base.COMPILER_REVISION = COMPILER_REVISION;
+var LAST_COMPATIBLE_COMPILER_REVISION = 7;
+
+base.LAST_COMPATIBLE_COMPILER_REVISION = LAST_COMPATIBLE_COMPILER_REVISION;
+var REVISION_CHANGES = {
+  1: '<= 1.0.rc.2', // 1.0.rc.2 is actually rev2 but doesn't report it
+  2: '== 1.0.0-rc.3',
+  3: '== 1.0.0-rc.4',
+  4: '== 1.x.x',
+  5: '== 2.0.0-alpha.x',
+  6: '>= 2.0.0-beta.1',
+  7: '>= 4.0.0 <4.3.0',
+  8: '>= 4.3.0'
+};
+
+base.REVISION_CHANGES = REVISION_CHANGES;
+var objectType = '[object Object]';
+
+function HandlebarsEnvironment(helpers, partials, decorators) {
+  this.helpers = helpers || {};
+  this.partials = partials || {};
+  this.decorators = decorators || {};
+
+  _helpers$1.registerDefaultHelpers(this);
+  _decorators.registerDefaultDecorators(this);
+}
+
+HandlebarsEnvironment.prototype = {
+  constructor: HandlebarsEnvironment,
+
+  logger: _logger2['default'],
+  log: _logger2['default'].log,
+
+  registerHelper: function registerHelper(name, fn) {
+    if (_utils$1.toString.call(name) === objectType) {
+      if (fn) {
+        throw new _exception2$1['default']('Arg not supported with multiple helpers');
+      }
+      _utils$1.extend(this.helpers, name);
+    } else {
+      this.helpers[name] = fn;
+    }
+  },
+  unregisterHelper: function unregisterHelper(name) {
+    delete this.helpers[name];
+  },
+
+  registerPartial: function registerPartial(name, partial) {
+    if (_utils$1.toString.call(name) === objectType) {
+      _utils$1.extend(this.partials, name);
+    } else {
+      if (typeof partial === 'undefined') {
+        throw new _exception2$1['default']('Attempting to register a partial called "' + name + '" as undefined');
+      }
+      this.partials[name] = partial;
+    }
+  },
+  unregisterPartial: function unregisterPartial(name) {
+    delete this.partials[name];
+  },
+
+  registerDecorator: function registerDecorator(name, fn) {
+    if (_utils$1.toString.call(name) === objectType) {
+      if (fn) {
+        throw new _exception2$1['default']('Arg not supported with multiple decorators');
+      }
+      _utils$1.extend(this.decorators, name);
+    } else {
+      this.decorators[name] = fn;
+    }
+  },
+  unregisterDecorator: function unregisterDecorator(name) {
+    delete this.decorators[name];
+  },
+  /**
+   * Reset the memory of illegal property accesses that have already been logged.
+   * @deprecated should only be used in handlebars test-cases
+   */
+  resetLoggedPropertyAccesses: function resetLoggedPropertyAccesses() {
+    _internalProtoAccess$1.resetLoggedProperties();
+  }
+};
+
+var log = _logger2['default'].log;
+
+base.log = log;
+base.createFrame = _utils$1.createFrame;
+base.logger = _logger2['default'];
+
+var safeString = {exports: {}};
+
+(function (module, exports) {
+
+	exports.__esModule = true;
+	function SafeString(string) {
+	  this.string = string;
+	}
+
+	SafeString.prototype.toString = SafeString.prototype.toHTML = function () {
+	  return '' + this.string;
+	};
+
+	exports['default'] = SafeString;
+	module.exports = exports['default'];
+	
+} (safeString, safeString.exports));
+
+var runtime$1 = {};
+
+var wrapHelper$1 = {};
+
+wrapHelper$1.__esModule = true;
+wrapHelper$1.wrapHelper = wrapHelper;
+
+function wrapHelper(helper, transformOptionsFn) {
+  if (typeof helper !== 'function') {
+    // This should not happen, but apparently it does in https://github.com/wycats/handlebars.js/issues/1639
+    // We try to make the wrapper least-invasive by not wrapping it, if the helper is not a function.
+    return helper;
+  }
+  var wrapper = function wrapper() /* dynamic arguments */{
+    var options = arguments[arguments.length - 1];
+    arguments[arguments.length - 1] = transformOptionsFn(options);
+    return helper.apply(this, arguments);
+  };
+  return wrapper;
+}
+
+runtime$1.__esModule = true;
+runtime$1.checkRevision = checkRevision;
+runtime$1.template = template;
+runtime$1.wrapProgram = wrapProgram;
+runtime$1.resolvePartial = resolvePartial;
+runtime$1.invokePartial = invokePartial;
+runtime$1.noop = noop;
+// istanbul ignore next
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+// istanbul ignore next
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+
+var _utils = utils;
+
+var Utils = _interopRequireWildcard(_utils);
+
+var _exception = exception.exports;
+
+var _exception2 = _interopRequireDefault(_exception);
+
+var _base = base;
+
+var _helpers = helpers;
+
+var _internalWrapHelper = wrapHelper$1;
+
+var _internalProtoAccess = protoAccess;
+
+function checkRevision(compilerInfo) {
+  var compilerRevision = compilerInfo && compilerInfo[0] || 1,
+      currentRevision = _base.COMPILER_REVISION;
+
+  if (compilerRevision >= _base.LAST_COMPATIBLE_COMPILER_REVISION && compilerRevision <= _base.COMPILER_REVISION) {
+    return;
+  }
+
+  if (compilerRevision < _base.LAST_COMPATIBLE_COMPILER_REVISION) {
+    var runtimeVersions = _base.REVISION_CHANGES[currentRevision],
+        compilerVersions = _base.REVISION_CHANGES[compilerRevision];
+    throw new _exception2['default']('Template was precompiled with an older version of Handlebars than the current runtime. ' + 'Please update your precompiler to a newer version (' + runtimeVersions + ') or downgrade your runtime to an older version (' + compilerVersions + ').');
+  } else {
+    // Use the embedded version info since the runtime doesn't know about this revision yet
+    throw new _exception2['default']('Template was precompiled with a newer version of Handlebars than the current runtime. ' + 'Please update your runtime to a newer version (' + compilerInfo[1] + ').');
+  }
+}
+
+function template(templateSpec, env) {
+  /* istanbul ignore next */
+  if (!env) {
+    throw new _exception2['default']('No environment passed to template');
+  }
+  if (!templateSpec || !templateSpec.main) {
+    throw new _exception2['default']('Unknown template object: ' + typeof templateSpec);
+  }
+
+  templateSpec.main.decorator = templateSpec.main_d;
+
+  // Note: Using env.VM references rather than local var references throughout this section to allow
+  // for external users to override these as pseudo-supported APIs.
+  env.VM.checkRevision(templateSpec.compiler);
+
+  // backwards compatibility for precompiled templates with compiler-version 7 (<4.3.0)
+  var templateWasPrecompiledWithCompilerV7 = templateSpec.compiler && templateSpec.compiler[0] === 7;
+
+  function invokePartialWrapper(partial, context, options) {
+    if (options.hash) {
+      context = Utils.extend({}, context, options.hash);
+      if (options.ids) {
+        options.ids[0] = true;
+      }
+    }
+    partial = env.VM.resolvePartial.call(this, partial, context, options);
+
+    var extendedOptions = Utils.extend({}, options, {
+      hooks: this.hooks,
+      protoAccessControl: this.protoAccessControl
+    });
+
+    var result = env.VM.invokePartial.call(this, partial, context, extendedOptions);
+
+    if (result == null && env.compile) {
+      options.partials[options.name] = env.compile(partial, templateSpec.compilerOptions, env);
+      result = options.partials[options.name](context, extendedOptions);
+    }
+    if (result != null) {
+      if (options.indent) {
+        var lines = result.split('\n');
+        for (var i = 0, l = lines.length; i < l; i++) {
+          if (!lines[i] && i + 1 === l) {
+            break;
+          }
+
+          lines[i] = options.indent + lines[i];
+        }
+        result = lines.join('\n');
+      }
+      return result;
+    } else {
+      throw new _exception2['default']('The partial ' + options.name + ' could not be compiled when running in runtime-only mode');
+    }
+  }
+
+  // Just add water
+  var container = {
+    strict: function strict(obj, name, loc) {
+      if (!obj || !(name in obj)) {
+        throw new _exception2['default']('"' + name + '" not defined in ' + obj, {
+          loc: loc
+        });
+      }
+      return container.lookupProperty(obj, name);
+    },
+    lookupProperty: function lookupProperty(parent, propertyName) {
+      var result = parent[propertyName];
+      if (result == null) {
+        return result;
+      }
+      if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+        return result;
+      }
+
+      if (_internalProtoAccess.resultIsAllowed(result, container.protoAccessControl, propertyName)) {
+        return result;
+      }
+      return undefined;
+    },
+    lookup: function lookup(depths, name) {
+      var len = depths.length;
+      for (var i = 0; i < len; i++) {
+        var result = depths[i] && container.lookupProperty(depths[i], name);
+        if (result != null) {
+          return depths[i][name];
+        }
+      }
+    },
+    lambda: function lambda(current, context) {
+      return typeof current === 'function' ? current.call(context) : current;
+    },
+
+    escapeExpression: Utils.escapeExpression,
+    invokePartial: invokePartialWrapper,
+
+    fn: function fn(i) {
+      var ret = templateSpec[i];
+      ret.decorator = templateSpec[i + '_d'];
+      return ret;
+    },
+
+    programs: [],
+    program: function program(i, data, declaredBlockParams, blockParams, depths) {
+      var programWrapper = this.programs[i],
+          fn = this.fn(i);
+      if (data || depths || blockParams || declaredBlockParams) {
+        programWrapper = wrapProgram(this, i, fn, data, declaredBlockParams, blockParams, depths);
+      } else if (!programWrapper) {
+        programWrapper = this.programs[i] = wrapProgram(this, i, fn);
+      }
+      return programWrapper;
+    },
+
+    data: function data(value, depth) {
+      while (value && depth--) {
+        value = value._parent;
+      }
+      return value;
+    },
+    mergeIfNeeded: function mergeIfNeeded(param, common) {
+      var obj = param || common;
+
+      if (param && common && param !== common) {
+        obj = Utils.extend({}, common, param);
+      }
+
+      return obj;
+    },
+    // An empty object to use as replacement for null-contexts
+    nullContext: Object.seal({}),
+
+    noop: env.VM.noop,
+    compilerInfo: templateSpec.compiler
+  };
+
+  function ret(context) {
+    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+    var data = options.data;
+
+    ret._setup(options);
+    if (!options.partial && templateSpec.useData) {
+      data = initData(context, data);
+    }
+    var depths = undefined,
+        blockParams = templateSpec.useBlockParams ? [] : undefined;
+    if (templateSpec.useDepths) {
+      if (options.depths) {
+        depths = context != options.depths[0] ? [context].concat(options.depths) : options.depths;
+      } else {
+        depths = [context];
+      }
+    }
+
+    function main(context /*, options*/) {
+      return '' + templateSpec.main(container, context, container.helpers, container.partials, data, blockParams, depths);
+    }
+
+    main = executeDecorators(templateSpec.main, main, container, options.depths || [], data, blockParams);
+    return main(context, options);
+  }
+
+  ret.isTop = true;
+
+  ret._setup = function (options) {
+    if (!options.partial) {
+      var mergedHelpers = Utils.extend({}, env.helpers, options.helpers);
+      wrapHelpersToPassLookupProperty(mergedHelpers, container);
+      container.helpers = mergedHelpers;
+
+      if (templateSpec.usePartial) {
+        // Use mergeIfNeeded here to prevent compiling global partials multiple times
+        container.partials = container.mergeIfNeeded(options.partials, env.partials);
+      }
+      if (templateSpec.usePartial || templateSpec.useDecorators) {
+        container.decorators = Utils.extend({}, env.decorators, options.decorators);
+      }
+
+      container.hooks = {};
+      container.protoAccessControl = _internalProtoAccess.createProtoAccessControl(options);
+
+      var keepHelperInHelpers = options.allowCallsToHelperMissing || templateWasPrecompiledWithCompilerV7;
+      _helpers.moveHelperToHooks(container, 'helperMissing', keepHelperInHelpers);
+      _helpers.moveHelperToHooks(container, 'blockHelperMissing', keepHelperInHelpers);
+    } else {
+      container.protoAccessControl = options.protoAccessControl; // internal option
+      container.helpers = options.helpers;
+      container.partials = options.partials;
+      container.decorators = options.decorators;
+      container.hooks = options.hooks;
+    }
+  };
+
+  ret._child = function (i, data, blockParams, depths) {
+    if (templateSpec.useBlockParams && !blockParams) {
+      throw new _exception2['default']('must pass block params');
+    }
+    if (templateSpec.useDepths && !depths) {
+      throw new _exception2['default']('must pass parent depths');
+    }
+
+    return wrapProgram(container, i, templateSpec[i], data, 0, blockParams, depths);
+  };
+  return ret;
+}
+
+function wrapProgram(container, i, fn, data, declaredBlockParams, blockParams, depths) {
+  function prog(context) {
+    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+    var currentDepths = depths;
+    if (depths && context != depths[0] && !(context === container.nullContext && depths[0] === null)) {
+      currentDepths = [context].concat(depths);
+    }
+
+    return fn(container, context, container.helpers, container.partials, options.data || data, blockParams && [options.blockParams].concat(blockParams), currentDepths);
+  }
+
+  prog = executeDecorators(fn, prog, container, depths, data, blockParams);
+
+  prog.program = i;
+  prog.depth = depths ? depths.length : 0;
+  prog.blockParams = declaredBlockParams || 0;
+  return prog;
+}
+
+/**
+ * This is currently part of the official API, therefore implementation details should not be changed.
+ */
+
+function resolvePartial(partial, context, options) {
+  if (!partial) {
+    if (options.name === '@partial-block') {
+      partial = options.data['partial-block'];
+    } else {
+      partial = options.partials[options.name];
+    }
+  } else if (!partial.call && !options.name) {
+    // This is a dynamic partial that returned a string
+    options.name = partial;
+    partial = options.partials[partial];
+  }
+  return partial;
+}
+
+function invokePartial(partial, context, options) {
+  // Use the current closure context to save the partial-block if this partial
+  var currentPartialBlock = options.data && options.data['partial-block'];
+  options.partial = true;
+  if (options.ids) {
+    options.data.contextPath = options.ids[0] || options.data.contextPath;
+  }
+
+  var partialBlock = undefined;
+  if (options.fn && options.fn !== noop) {
+    (function () {
+      options.data = _base.createFrame(options.data);
+      // Wrapper function to get access to currentPartialBlock from the closure
+      var fn = options.fn;
+      partialBlock = options.data['partial-block'] = function partialBlockWrapper(context) {
+        var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+        // Restore the partial-block from the closure for the execution of the block
+        // i.e. the part inside the block of the partial call.
+        options.data = _base.createFrame(options.data);
+        options.data['partial-block'] = currentPartialBlock;
+        return fn(context, options);
+      };
+      if (fn.partials) {
+        options.partials = Utils.extend({}, options.partials, fn.partials);
+      }
+    })();
+  }
+
+  if (partial === undefined && partialBlock) {
+    partial = partialBlock;
+  }
+
+  if (partial === undefined) {
+    throw new _exception2['default']('The partial ' + options.name + ' could not be found');
+  } else if (partial instanceof Function) {
+    return partial(context, options);
+  }
+}
+
+function noop() {
+  return '';
+}
+
+function initData(context, data) {
+  if (!data || !('root' in data)) {
+    data = data ? _base.createFrame(data) : {};
+    data.root = context;
+  }
+  return data;
+}
+
+function executeDecorators(fn, prog, container, depths, data, blockParams) {
+  if (fn.decorator) {
+    var props = {};
+    prog = fn.decorator(prog, props, container, depths && depths[0], data, blockParams, depths);
+    Utils.extend(prog, props);
+  }
+  return prog;
+}
+
+function wrapHelpersToPassLookupProperty(mergedHelpers, container) {
+  Object.keys(mergedHelpers).forEach(function (helperName) {
+    var helper = mergedHelpers[helperName];
+    mergedHelpers[helperName] = passLookupPropertyOption(helper, container);
+  });
+}
+
+function passLookupPropertyOption(helper, container) {
+  var lookupProperty = container.lookupProperty;
+  return _internalWrapHelper.wrapHelper(helper, function (options) {
+    return Utils.extend({ lookupProperty: lookupProperty }, options);
+  });
+}
+
+var noConflict = {exports: {}};
+
+(function (module, exports) {
+
+	exports.__esModule = true;
+
+	exports['default'] = function (Handlebars) {
+	  /* istanbul ignore next */
+	  var root = typeof commonjsGlobal !== 'undefined' ? commonjsGlobal : window,
+	      $Handlebars = root.Handlebars;
+	  /* istanbul ignore next */
+	  Handlebars.noConflict = function () {
+	    if (root.Handlebars === Handlebars) {
+	      root.Handlebars = $Handlebars;
+	    }
+	    return Handlebars;
+	  };
+	};
+
+	module.exports = exports['default'];
+	
+} (noConflict, noConflict.exports));
+
+(function (module, exports) {
+
+	exports.__esModule = true;
+	// istanbul ignore next
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+	// istanbul ignore next
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+
+	var _handlebarsBase = base;
+
+	var base$1 = _interopRequireWildcard(_handlebarsBase);
+
+	// Each of these augment the Handlebars object. No need to setup here.
+	// (This is done to easily share code between commonjs and browse envs)
+
+	var _handlebarsSafeString = safeString.exports;
+
+	var _handlebarsSafeString2 = _interopRequireDefault(_handlebarsSafeString);
+
+	var _handlebarsException = exception.exports;
+
+	var _handlebarsException2 = _interopRequireDefault(_handlebarsException);
+
+	var _handlebarsUtils = utils;
+
+	var Utils = _interopRequireWildcard(_handlebarsUtils);
+
+	var _handlebarsRuntime = runtime$1;
+
+	var runtime = _interopRequireWildcard(_handlebarsRuntime);
+
+	var _handlebarsNoConflict = noConflict.exports;
+
+	var _handlebarsNoConflict2 = _interopRequireDefault(_handlebarsNoConflict);
+
+	// For compatibility and usage outside of module systems, make the Handlebars object a namespace
+	function create() {
+	  var hb = new base$1.HandlebarsEnvironment();
+
+	  Utils.extend(hb, base$1);
+	  hb.SafeString = _handlebarsSafeString2['default'];
+	  hb.Exception = _handlebarsException2['default'];
+	  hb.Utils = Utils;
+	  hb.escapeExpression = Utils.escapeExpression;
+
+	  hb.VM = runtime;
+	  hb.template = function (spec) {
+	    return runtime.template(spec, hb);
+	  };
+
+	  return hb;
+	}
+
+	var inst = create();
+	inst.create = create;
+
+	_handlebarsNoConflict2['default'](inst);
+
+	inst['default'] = inst;
+
+	exports['default'] = inst;
+	module.exports = exports['default'];
+	
+} (handlebars_runtime, handlebars_runtime.exports));
+
+// Create a simple path alias to allow browserify to resolve
+// the runtime on a supported path.
+var runtime = handlebars_runtime.exports['default'];
 
 var templateClient = {"1":function(container,depth0,helpers,partials,data) {
     return "import { NgModule} from '@angular/core';\nimport { HttpClientModule } from '@angular/common/http';\n\nimport { AngularHttpRequest } from './core/AngularHttpRequest';\nimport { BaseHttpRequest } from './core/BaseHttpRequest';\nimport type { OpenAPIConfig } from './core/OpenAPI';\nimport { OpenAPI } from './core/OpenAPI';\n";
@@ -2743,7 +4154,7 @@ var templateCoreApiError = {"compiler":[8,">= 4.3.0"],"main":function(container,
     };
 
   return ((stack1 = container.invokePartial(lookupProperty(partials,"header"),depth0,{"name":"header","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
-    + "\nimport type { ApiResult } from './ApiResult';\n\nexport class ApiError extends Error {\n	public readonly url: string;\n	public readonly status: number;\n	public readonly statusText: string;\n	public readonly body: any;\n\n	constructor(response: ApiResult, message: string) {\n		super(message);\n\n		this.name = 'ApiError';\n		this.url = response.url;\n		this.status = response.status;\n		this.statusText = response.statusText;\n		this.body = response.body;\n	}\n}";
+    + "\nimport type { ApiRequestOptions } from './ApiRequestOptions';\nimport type { ApiResult } from './ApiResult';\n\nexport class ApiError extends Error {\n	public readonly url: string;\n	public readonly status: number;\n	public readonly statusText: string;\n	public readonly body: any;\n	public readonly request: ApiRequestOptions;\n\n	constructor(request: ApiRequestOptions, response: ApiResult, message: string) {\n		super(message);\n\n		this.name = 'ApiError';\n		this.url = response.url;\n		this.status = response.status;\n		this.statusText = response.statusText;\n		this.body = response.body;\n		this.request = request;\n	}\n}";
 },"usePartial":true,"useData":true};
 
 var templateCoreApiRequestOptions = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
@@ -2771,7 +4182,7 @@ var templateCoreApiResult = {"compiler":[8,">= 4.3.0"],"main":function(container
 },"usePartial":true,"useData":true};
 
 var axiosGetHeaders = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "const getHeaders = async (config: OpenAPIConfig, options: ApiRequestOptions, formData?: FormData): Promise<Record<string, string>> => {\n	const token = await resolve(options, config.TOKEN);\n	const username = await resolve(options, config.USERNAME);\n	const password = await resolve(options, config.PASSWORD);\n	const additionalHeaders = await resolve(options, config.HEADERS);\n	const formHeaders = typeof formData?.getHeaders === 'function' && formData?.getHeaders() || {}\n\n	const headers = Object.entries({\n		Accept: 'application/json',\n		...additionalHeaders,\n		...options.headers,\n		...formHeaders,\n	})\n	.filter(([_, value]) => isDefined(value))\n	.reduce((headers, [key, value]) => ({\n		...headers,\n		[key]: String(value),\n	}), {} as Record<string, string>);\n\n	if (isStringWithValue(token)) {\n		headers['Authorization'] = `Bearer ${token}`;\n	}\n\n	if (isStringWithValue(username) && isStringWithValue(password)) {\n		const credentials = base64(`${username}:${password}`);\n		headers['Authorization'] = `Basic ${credentials}`;\n	}\n\n	return headers;\n};";
+    return "const getHeaders = async (config: OpenAPIConfig, options: ApiRequestOptions, formData?: FormData): Promise<Record<string, string>> => {\n	const token = await resolve(options, config.TOKEN);\n	const username = await resolve(options, config.USERNAME);\n	const password = await resolve(options, config.PASSWORD);\n	const additionalHeaders = await resolve(options, config.HEADERS);\n	const formHeaders = typeof formData?.getHeaders === 'function' && formData?.getHeaders() || {}\n\n	const headers = Object.entries({\n		Accept: 'application/json',\n		...additionalHeaders,\n		...options.headers,\n		...formHeaders,\n	})\n	.filter(([_, value]) => isDefined(value))\n	.reduce((headers, [key, value]) => ({\n		...headers,\n		[key]: String(value),\n	}), {} as Record<string, string>);\n\n	if (isStringWithValue(token)) {\n		headers['Authorization'] = `Bearer ${token}`;\n	}\n\n	if (isStringWithValue(username) && isStringWithValue(password)) {\n		const credentials = base64(`${username}:${password}`);\n		headers['Authorization'] = `Basic ${credentials}`;\n	}\n\n	if (options.body) {\n		if (options.mediaType) {\n			headers['Content-Type'] = options.mediaType;\n		} else if (isBlob(options.body)) {\n			headers['Content-Type'] = options.body.type || 'application/octet-stream';\n		} else if (isString(options.body)) {\n			headers['Content-Type'] = 'text/plain';\n		} else if (!isFormData(options.body)) {\n			headers['Content-Type'] = 'application/json';\n		}\n	}\n\n	return headers;\n};";
 },"useData":true};
 
 var axiosGetRequestBody = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
@@ -2795,7 +4206,7 @@ var axiosRequest = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,h
     };
 
   return ((stack1 = container.invokePartial(lookupProperty(partials,"header"),depth0,{"name":"header","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
-    + "\nimport axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';\nimport FormData from 'form-data';\n\nimport { ApiError } from './ApiError';\nimport type { ApiRequestOptions } from './ApiRequestOptions';\nimport type { ApiResult } from './ApiResult';\nimport { CancelablePromise } from './CancelablePromise';\nimport type { OnCancel } from './CancelablePromise';\nimport type { OpenAPIConfig } from './OpenAPI';\n\n"
+    + "\nimport axios from 'axios';\nimport type { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';\nimport FormData from 'form-data';\n\nimport { ApiError } from './ApiError';\nimport type { ApiRequestOptions } from './ApiRequestOptions';\nimport type { ApiResult } from './ApiResult';\nimport { CancelablePromise } from './CancelablePromise';\nimport type { OnCancel } from './CancelablePromise';\nimport type { OpenAPIConfig } from './OpenAPI';\n\n"
     + ((stack1 = container.invokePartial(lookupProperty(partials,"functions/isDefined"),depth0,{"name":"functions/isDefined","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + "\n\n"
     + ((stack1 = container.invokePartial(lookupProperty(partials,"functions/isString"),depth0,{"name":"functions/isString","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
@@ -2803,6 +4214,8 @@ var axiosRequest = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,h
     + ((stack1 = container.invokePartial(lookupProperty(partials,"functions/isStringWithValue"),depth0,{"name":"functions/isStringWithValue","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + "\n\n"
     + ((stack1 = container.invokePartial(lookupProperty(partials,"functions/isBlob"),depth0,{"name":"functions/isBlob","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
+    + "\n\n"
+    + ((stack1 = container.invokePartial(lookupProperty(partials,"functions/isFormData"),depth0,{"name":"functions/isFormData","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + "\n\n"
     + ((stack1 = container.invokePartial(lookupProperty(partials,"functions/isSuccess"),depth0,{"name":"functions/isSuccess","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + "\n\n"
@@ -2873,7 +4286,7 @@ var templateCancelablePromise = {"compiler":[8,">= 4.3.0"],"main":function(conta
     };
 
   return ((stack1 = container.invokePartial(lookupProperty(partials,"header"),depth0,{"name":"header","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
-    + "\nexport class CancelError extends Error {\n\n	constructor(message: string) {\n		super(message);\n		this.name = 'CancelError';\n	}\n\n	public get isCancelled(): boolean {\n		return true;\n	}\n}\n\nexport interface OnCancel {\n	readonly isResolved: boolean;\n	readonly isRejected: boolean;\n	readonly isCancelled: boolean;\n\n	(cancelHandler: () => void): void;\n}\n\nexport class CancelablePromise<T> implements Promise<T> {\n	readonly [Symbol.toStringTag]: string;\n\n	private _isResolved: boolean;\n	private _isRejected: boolean;\n	private _isCancelled: boolean;\n	private readonly _cancelHandlers: (() => void)[];\n	private readonly _promise: Promise<T>;\n	private _resolve?: (value: T | PromiseLike<T>) => void;\n	private _reject?: (reason?: any) => void;\n\n	constructor(\n		executor: (\n			resolve: (value: T | PromiseLike<T>) => void,\n			reject: (reason?: any) => void,\n			onCancel: OnCancel\n		) => void\n	) {\n		this._isResolved = false;\n		this._isRejected = false;\n		this._isCancelled = false;\n		this._cancelHandlers = [];\n		this._promise = new Promise<T>((resolve, reject) => {\n			this._resolve = resolve;\n			this._reject = reject;\n\n			const onResolve = (value: T | PromiseLike<T>): void => {\n				if (this._isResolved || this._isRejected || this._isCancelled) {\n					return;\n				}\n				this._isResolved = true;\n				this._resolve?.(value);\n			};\n\n			const onReject = (reason?: any): void => {\n				if (this._isResolved || this._isRejected || this._isCancelled) {\n					return;\n				}\n				this._isRejected = true;\n				this._reject?.(reason);\n			};\n\n			const onCancel = (cancelHandler: () => void): void => {\n				if (this._isResolved || this._isRejected || this._isCancelled) {\n					return;\n				}\n				this._cancelHandlers.push(cancelHandler);\n			};\n\n			Object.defineProperty(onCancel, 'isResolved', {\n				get: (): boolean => this._isResolved,\n			});\n\n			Object.defineProperty(onCancel, 'isRejected', {\n				get: (): boolean => this._isRejected,\n			});\n\n			Object.defineProperty(onCancel, 'isCancelled', {\n				get: (): boolean => this._isCancelled,\n			});\n\n			return executor(onResolve, onReject, onCancel as OnCancel);\n		});\n	}\n\n	public then<TResult1 = T, TResult2 = never>(\n		onFulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,\n		onRejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null\n	): Promise<TResult1 | TResult2> {\n		return this._promise.then(onFulfilled, onRejected);\n	}\n\n	public catch<TResult = never>(\n		onRejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null\n	): Promise<T | TResult> {\n		return this._promise.catch(onRejected);\n	}\n\n	public finally(onFinally?: (() => void) | null): Promise<T> {\n		return this._promise.finally(onFinally);\n	}\n\n	public cancel(): void {\n		if (this._isResolved || this._isRejected || this._isCancelled) {\n			return;\n		}\n		this._isCancelled = true;\n		if (this._cancelHandlers.length) {\n			try {\n				for (const cancelHandler of this._cancelHandlers) {\n					cancelHandler();\n				}\n			} catch (error) {\n				console.warn('Cancellation threw an error', error);\n				return;\n			}\n		}\n		this._cancelHandlers.length = 0;\n		this._reject?.(new CancelError('Request aborted'));\n	}\n\n	public get isCancelled(): boolean {\n		return this._isCancelled;\n	}\n}";
+    + "\nexport class CancelError extends Error {\n\n	constructor(message: string) {\n		super(message);\n		this.name = 'CancelError';\n	}\n\n	public get isCancelled(): boolean {\n		return true;\n	}\n}\n\nexport interface OnCancel {\n	readonly isResolved: boolean;\n	readonly isRejected: boolean;\n	readonly isCancelled: boolean;\n\n	(cancelHandler: () => void): void;\n}\n\nexport class CancelablePromise<T> implements Promise<T> {\n	readonly [Symbol.toStringTag]!: string;\n\n	private _isResolved: boolean;\n	private _isRejected: boolean;\n	private _isCancelled: boolean;\n	private readonly _cancelHandlers: (() => void)[];\n	private readonly _promise: Promise<T>;\n	private _resolve?: (value: T | PromiseLike<T>) => void;\n	private _reject?: (reason?: any) => void;\n\n	constructor(\n		executor: (\n			resolve: (value: T | PromiseLike<T>) => void,\n			reject: (reason?: any) => void,\n			onCancel: OnCancel\n		) => void\n	) {\n		this._isResolved = false;\n		this._isRejected = false;\n		this._isCancelled = false;\n		this._cancelHandlers = [];\n		this._promise = new Promise<T>((resolve, reject) => {\n			this._resolve = resolve;\n			this._reject = reject;\n\n			const onResolve = (value: T | PromiseLike<T>): void => {\n				if (this._isResolved || this._isRejected || this._isCancelled) {\n					return;\n				}\n				this._isResolved = true;\n				this._resolve?.(value);\n			};\n\n			const onReject = (reason?: any): void => {\n				if (this._isResolved || this._isRejected || this._isCancelled) {\n					return;\n				}\n				this._isRejected = true;\n				this._reject?.(reason);\n			};\n\n			const onCancel = (cancelHandler: () => void): void => {\n				if (this._isResolved || this._isRejected || this._isCancelled) {\n					return;\n				}\n				this._cancelHandlers.push(cancelHandler);\n			};\n\n			Object.defineProperty(onCancel, 'isResolved', {\n				get: (): boolean => this._isResolved,\n			});\n\n			Object.defineProperty(onCancel, 'isRejected', {\n				get: (): boolean => this._isRejected,\n			});\n\n			Object.defineProperty(onCancel, 'isCancelled', {\n				get: (): boolean => this._isCancelled,\n			});\n\n			return executor(onResolve, onReject, onCancel as OnCancel);\n		});\n	}\n\n	public then<TResult1 = T, TResult2 = never>(\n		onFulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,\n		onRejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null\n	): Promise<TResult1 | TResult2> {\n		return this._promise.then(onFulfilled, onRejected);\n	}\n\n	public catch<TResult = never>(\n		onRejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null\n	): Promise<T | TResult> {\n		return this._promise.catch(onRejected);\n	}\n\n	public finally(onFinally?: (() => void) | null): Promise<T> {\n		return this._promise.finally(onFinally);\n	}\n\n	public cancel(): void {\n		if (this._isResolved || this._isRejected || this._isCancelled) {\n			return;\n		}\n		this._isCancelled = true;\n		if (this._cancelHandlers.length) {\n			try {\n				for (const cancelHandler of this._cancelHandlers) {\n					cancelHandler();\n				}\n			} catch (error) {\n				console.warn('Cancellation threw an error', error);\n				return;\n			}\n		}\n		this._cancelHandlers.length = 0;\n		this._reject?.(new CancelError('Request aborted'));\n	}\n\n	public get isCancelled(): boolean {\n		return this._isCancelled;\n	}\n}";
 },"usePartial":true,"useData":true};
 
 var fetchGetHeaders = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
@@ -2881,7 +4294,7 @@ var fetchGetHeaders = {"compiler":[8,">= 4.3.0"],"main":function(container,depth
 },"useData":true};
 
 var fetchGetRequestBody = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "const getRequestBody = (options: ApiRequestOptions): any => {\n	if (options.body) {\n		if (options.mediaType?.includes('/json')) {\n			return JSON.stringify(options.body)\n		} else if (isString(options.body) || isBlob(options.body) || isFormData(options.body)) {\n			return options.body;\n		} else {\n			return JSON.stringify(options.body);\n		}\n	}\n	return undefined;\n};";
+    return "const getRequestBody = (options: ApiRequestOptions): any => {\n	if (options.body !== undefined) {\n		if (options.mediaType?.includes('/json')) {\n			return JSON.stringify(options.body)\n		} else if (isString(options.body) || isBlob(options.body) || isFormData(options.body)) {\n			return options.body;\n		} else {\n			return JSON.stringify(options.body);\n		}\n	}\n	return undefined;\n};";
 },"useData":true};
 
 var fetchGetResponseBody = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
@@ -2945,7 +4358,7 @@ var functionBase64 = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0
 },"useData":true};
 
 var functionCatchErrorCodes = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "const catchErrorCodes = (options: ApiRequestOptions, result: ApiResult): void => {\n	const errors: Record<number, string> = {\n		400: 'Bad Request',\n		401: 'Unauthorized',\n		403: 'Forbidden',\n		404: 'Not Found',\n		500: 'Internal Server Error',\n		502: 'Bad Gateway',\n		503: 'Service Unavailable',\n		...options.errors,\n	}\n\n	const error = errors[result.status];\n	if (error) {\n		throw new ApiError(result, error);\n	}\n\n	if (!result.ok) {\n		throw new ApiError(result, 'Generic Error');\n	}\n};";
+    return "const catchErrorCodes = (options: ApiRequestOptions, result: ApiResult): void => {\n	const errors: Record<number, string> = {\n		400: 'Bad Request',\n		401: 'Unauthorized',\n		403: 'Forbidden',\n		404: 'Not Found',\n		500: 'Internal Server Error',\n		502: 'Bad Gateway',\n		503: 'Service Unavailable',\n		...options.errors,\n	}\n\n	const error = errors[result.status];\n	if (error) {\n		throw new ApiError(options, result, error);\n	}\n\n	if (!result.ok) {\n		throw new ApiError(options, result, 'Generic Error');\n	}\n};";
 },"useData":true};
 
 var functionGetFormData = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
@@ -3029,7 +4442,7 @@ var nodeGetHeaders = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0
 },"useData":true};
 
 var nodeGetRequestBody = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "const getRequestBody = (options: ApiRequestOptions): any => {\n	if (options.body) {\n		if (options.mediaType?.includes('/json')) {\n			return JSON.stringify(options.body)\n		} else if (isString(options.body) || isBlob(options.body) || isFormData(options.body)) {\n			return options.body as any;\n		} else {\n			return JSON.stringify(options.body);\n		}\n	}\n	return undefined;\n};";
+    return "const getRequestBody = (options: ApiRequestOptions): any => {\n	if (options.body !== undefined) {\n		if (options.mediaType?.includes('/json')) {\n			return JSON.stringify(options.body)\n		} else if (isString(options.body) || isBlob(options.body) || isFormData(options.body)) {\n			return options.body as any;\n		} else {\n			return JSON.stringify(options.body);\n		}\n	}\n	return undefined;\n};";
 },"useData":true};
 
 var nodeGetResponseBody = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
@@ -3049,7 +4462,7 @@ var nodeRequest = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,he
     };
 
   return ((stack1 = container.invokePartial(lookupProperty(partials,"header"),depth0,{"name":"header","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
-    + "\nimport FormData from 'form-data';\nimport fetch, { Headers, RequestInit, Response } from 'node-fetch';\n\nimport { ApiError } from './ApiError';\nimport type { ApiRequestOptions } from './ApiRequestOptions';\nimport type { ApiResult } from './ApiResult';\nimport { CancelablePromise } from './CancelablePromise';\nimport type { OnCancel } from './CancelablePromise';\nimport type { OpenAPIConfig } from './OpenAPI';\n\n"
+    + "\nimport FormData from 'form-data';\nimport fetch, { Headers } from 'node-fetch';\nimport type { RequestInit, Response } from 'node-fetch';\nimport type { AbortSignal } from 'node-fetch/externals';\n\nimport { ApiError } from './ApiError';\nimport type { ApiRequestOptions } from './ApiRequestOptions';\nimport type { ApiResult } from './ApiResult';\nimport { CancelablePromise } from './CancelablePromise';\nimport type { OnCancel } from './CancelablePromise';\nimport type { OpenAPIConfig } from './OpenAPI';\n\n"
     + ((stack1 = container.invokePartial(lookupProperty(partials,"functions/isDefined"),depth0,{"name":"functions/isDefined","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + "\n\n"
     + ((stack1 = container.invokePartial(lookupProperty(partials,"functions/isString"),depth0,{"name":"functions/isString","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
@@ -3085,7 +4498,7 @@ var nodeRequest = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,he
 },"usePartial":true,"useData":true};
 
 var nodeSendRequest = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "export const sendRequest = async (\n	options: ApiRequestOptions,\n	url: string,\n	body: any,\n	formData: FormData | undefined,\n	headers: Headers,\n	onCancel: OnCancel\n): Promise<Response> => {\n	const controller = new AbortController();\n\n	const request: RequestInit = {\n		headers,\n		method: options.method,\n		body: body ?? formData,\n		signal: controller.signal,\n	};\n\n	onCancel(() => controller.abort());\n\n	return await fetch(url, request);\n};";
+    return "export const sendRequest = async (\n	options: ApiRequestOptions,\n	url: string,\n	body: any,\n	formData: FormData | undefined,\n	headers: Headers,\n	onCancel: OnCancel\n): Promise<Response> => {\n	const controller = new AbortController();\n\n	const request: RequestInit = {\n		headers,\n		method: options.method,\n		body: body ?? formData,\n		signal: controller.signal as AbortSignal,\n	};\n\n	onCancel(() => controller.abort());\n\n	return await fetch(url, request);\n};";
 },"useData":true};
 
 var templateCoreSettings = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
@@ -3169,7 +4582,7 @@ var xhrGetHeaders = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,
 },"useData":true};
 
 var xhrGetRequestBody = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "const getRequestBody = (options: ApiRequestOptions): any => {\n	if (options.body) {\n		if (options.mediaType?.includes('/json')) {\n			return JSON.stringify(options.body)\n		} else if (isString(options.body) || isBlob(options.body) || isFormData(options.body)) {\n			return options.body;\n		} else {\n			return JSON.stringify(options.body);\n		}\n	}\n\n	return undefined;\n};";
+    return "const getRequestBody = (options: ApiRequestOptions): any => {\n	if (options.body !== undefined) {\n		if (options.mediaType?.includes('/json')) {\n			return JSON.stringify(options.body)\n		} else if (isString(options.body) || isBlob(options.body) || isFormData(options.body)) {\n			return options.body;\n		} else {\n			return JSON.stringify(options.body);\n		}\n	}\n	return undefined;\n};";
 },"useData":true};
 
 var xhrGetResponseBody = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
@@ -3964,6 +5377,18 @@ var partialBase = {"1":function(container,depth0,helpers,partials,data) {
 },"useData":true};
 
 var partialExportComposition = {"1":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "/**\n"
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(2, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":3,"column":0},"end":{"line":5,"column":7}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"deprecated"),{"name":"if","hash":{},"fn":container.program(4, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":6,"column":0},"end":{"line":8,"column":7}}})) != null ? stack1 : "")
+    + " */\n";
+},"2":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -3971,19 +5396,21 @@ var partialExportComposition = {"1":function(container,depth0,helpers,partials,d
         return undefined
     };
 
-  return "/**\n * "
-    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":3,"column":3},"end":{"line":3,"column":34}}})) != null ? stack1 : "")
-    + "\n */\n";
-},"3":function(container,depth0,helpers,partials,data) {
-    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
-        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
-          return parent[propertyName];
-        }
-        return undefined
-    };
-
-  return ((stack1 = lookupProperty(helpers,"unless").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(lookupProperty(data,"root"),"useUnionTypes"),{"name":"unless","hash":{},"fn":container.program(4, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":8,"column":0},"end":{"line":27,"column":11}}})) != null ? stack1 : "");
+  return " * "
+    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":4,"column":3},"end":{"line":4,"column":34}}})) != null ? stack1 : "")
+    + "\n";
 },"4":function(container,depth0,helpers,partials,data) {
+    return " * @deprecated\n";
+},"6":function(container,depth0,helpers,partials,data) {
+    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return ((stack1 = lookupProperty(helpers,"unless").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(lookupProperty(data,"root"),"useUnionTypes"),{"name":"unless","hash":{},"fn":container.program(7, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":13,"column":0},"end":{"line":37,"column":11}}})) != null ? stack1 : "");
+},"7":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -3992,11 +5419,11 @@ var partialExportComposition = {"1":function(container,depth0,helpers,partials,d
     };
 
   return "\nexport namespace "
-    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":10,"column":20},"end":{"line":10,"column":24}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":15,"column":20},"end":{"line":15,"column":24}} ), depth0)) != null ? stack1 : "")
     + " {\n\n"
-    + ((stack1 = lookupProperty(helpers,"each").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"enums"),{"name":"each","hash":{},"fn":container.program(5, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":12,"column":1},"end":{"line":24,"column":10}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"each").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"enums"),{"name":"each","hash":{},"fn":container.program(8, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":17,"column":1},"end":{"line":34,"column":10}}})) != null ? stack1 : "")
     + "\n}\n";
-},"5":function(container,depth0,helpers,partials,data) {
+},"8":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -4004,13 +5431,98 @@ var partialExportComposition = {"1":function(container,depth0,helpers,partials,d
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(6, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":13,"column":1},"end":{"line":17,"column":8}}})) != null ? stack1 : "")
+  return ((stack1 = lookupProperty(helpers,"ifdef").call(alias1,lookupProperty(depth0,"description"),lookupProperty(depth0,"deprecated"),{"name":"ifdef","hash":{},"fn":container.program(9, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":18,"column":1},"end":{"line":27,"column":11}}})) != null ? stack1 : "")
     + "	export enum "
-    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":18,"column":16},"end":{"line":18,"column":20}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":28,"column":16},"end":{"line":28,"column":20}} ), depth0)) != null ? stack1 : "")
     + " {\n"
-    + ((stack1 = lookupProperty(helpers,"each").call(alias1,lookupProperty(depth0,"enum"),{"name":"each","hash":{},"fn":container.program(8, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":19,"column":2},"end":{"line":21,"column":11}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"each").call(alias1,lookupProperty(depth0,"enum"),{"name":"each","hash":{},"fn":container.program(14, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":29,"column":2},"end":{"line":31,"column":11}}})) != null ? stack1 : "")
     + "	}\n\n";
+},"9":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "	/**\n"
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(10, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":20,"column":1},"end":{"line":22,"column":8}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"deprecated"),{"name":"if","hash":{},"fn":container.program(12, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":23,"column":1},"end":{"line":25,"column":8}}})) != null ? stack1 : "")
+    + "	 */\n";
+},"10":function(container,depth0,helpers,partials,data) {
+    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "	 * "
+    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":21,"column":4},"end":{"line":21,"column":35}}})) != null ? stack1 : "")
+    + "\n";
+},"12":function(container,depth0,helpers,partials,data) {
+    return "	 * @deprecated\n";
+},"14":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=container.strict, alias2=container.lambda;
+
+  return "		"
+    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":30,"column":5},"end":{"line":30,"column":9}} ), depth0)) != null ? stack1 : "")
+    + " = "
+    + ((stack1 = alias2(alias1(depth0, "value", {"start":{"line":30,"column":18},"end":{"line":30,"column":23}} ), depth0)) != null ? stack1 : "")
+    + ",\n";
+},"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return ((stack1 = lookupProperty(helpers,"ifdef").call(alias1,lookupProperty(depth0,"description"),lookupProperty(depth0,"deprecated"),{"name":"ifdef","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":10,"column":10}}})) != null ? stack1 : "")
+    + "export type "
+    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":11,"column":15},"end":{"line":11,"column":19}} ), depth0)) != null ? stack1 : "")
+    + " = "
+    + ((stack1 = container.invokePartial(lookupProperty(partials,"type"),depth0,{"name":"type","hash":{"parent":lookupProperty(depth0,"name")},"data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
+    + ";\n"
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"enums"),{"name":"if","hash":{},"fn":container.program(6, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":12,"column":0},"end":{"line":38,"column":7}}})) != null ? stack1 : "");
+},"usePartial":true,"useData":true};
+
+var partialExportEnum = {"1":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "/**\n"
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(2, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":3,"column":0},"end":{"line":5,"column":7}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"deprecated"),{"name":"if","hash":{},"fn":container.program(4, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":6,"column":0},"end":{"line":8,"column":7}}})) != null ? stack1 : "")
+    + " */\n";
+},"2":function(container,depth0,helpers,partials,data) {
+    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return " * "
+    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":4,"column":3},"end":{"line":4,"column":34}}})) != null ? stack1 : "")
+    + "\n";
+},"4":function(container,depth0,helpers,partials,data) {
+    return " * @deprecated\n";
 },"6":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(7, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":13,"column":1},"end":{"line":17,"column":8}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"containsSpaces").call(alias1,lookupProperty(depth0,"name"),{"name":"containsSpaces","hash":{},"fn":container.program(9, data, 0),"inverse":container.program(11, data, 0),"data":data,"loc":{"start":{"line":18,"column":1},"end":{"line":22,"column":20}}})) != null ? stack1 : "");
+},"7":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -4021,78 +5533,21 @@ var partialExportComposition = {"1":function(container,depth0,helpers,partials,d
   return "	/**\n	 * "
     + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":15,"column":4},"end":{"line":15,"column":35}}})) != null ? stack1 : "")
     + "\n	 */\n";
-},"8":function(container,depth0,helpers,partials,data) {
-    var stack1, alias1=container.strict, alias2=container.lambda;
-
-  return "		"
-    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":20,"column":5},"end":{"line":20,"column":9}} ), depth0)) != null ? stack1 : "")
-    + " = "
-    + ((stack1 = alias2(alias1(depth0, "value", {"start":{"line":20,"column":18},"end":{"line":20,"column":23}} ), depth0)) != null ? stack1 : "")
-    + ",\n";
-},"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
-    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
-        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
-          return parent[propertyName];
-        }
-        return undefined
-    };
-
-  return ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":5,"column":7}}})) != null ? stack1 : "")
-    + "export type "
-    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":6,"column":15},"end":{"line":6,"column":19}} ), depth0)) != null ? stack1 : "")
-    + " = "
-    + ((stack1 = container.invokePartial(lookupProperty(partials,"type"),depth0,{"name":"type","hash":{"parent":lookupProperty(depth0,"name")},"data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
-    + ";\n"
-    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"enums"),{"name":"if","hash":{},"fn":container.program(3, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":7,"column":0},"end":{"line":28,"column":7}}})) != null ? stack1 : "");
-},"usePartial":true,"useData":true};
-
-var partialExportEnum = {"1":function(container,depth0,helpers,partials,data) {
-    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
-        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
-          return parent[propertyName];
-        }
-        return undefined
-    };
-
-  return "/**\n * "
-    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":3,"column":3},"end":{"line":3,"column":34}}})) != null ? stack1 : "")
-    + "\n */\n";
-},"3":function(container,depth0,helpers,partials,data) {
-    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
-        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
-          return parent[propertyName];
-        }
-        return undefined
-    };
-
-  return ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(4, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":8,"column":1},"end":{"line":12,"column":8}}})) != null ? stack1 : "")
-    + ((stack1 = lookupProperty(helpers,"containsSpaces").call(alias1,lookupProperty(depth0,"name"),{"name":"containsSpaces","hash":{},"fn":container.program(6, data, 0),"inverse":container.program(8, data, 0),"data":data,"loc":{"start":{"line":13,"column":1},"end":{"line":17,"column":20}}})) != null ? stack1 : "");
-},"4":function(container,depth0,helpers,partials,data) {
-    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
-        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
-          return parent[propertyName];
-        }
-        return undefined
-    };
-
-  return "	/**\n	 * "
-    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":10,"column":4},"end":{"line":10,"column":35}}})) != null ? stack1 : "")
-    + "\n	 */\n";
-},"6":function(container,depth0,helpers,partials,data) {
+},"9":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=container.strict, alias2=container.lambda;
 
   return "	'"
-    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":14,"column":5},"end":{"line":14,"column":9}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":19,"column":5},"end":{"line":19,"column":9}} ), depth0)) != null ? stack1 : "")
     + "' = "
-    + ((stack1 = alias2(alias1(depth0, "value", {"start":{"line":14,"column":19},"end":{"line":14,"column":24}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(depth0, "value", {"start":{"line":19,"column":19},"end":{"line":19,"column":24}} ), depth0)) != null ? stack1 : "")
     + ",\n";
-},"8":function(container,depth0,helpers,partials,data) {
+},"11":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=container.strict, alias2=container.lambda;
 
   return "	"
-    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":16,"column":4},"end":{"line":16,"column":8}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":21,"column":4},"end":{"line":21,"column":8}} ), depth0)) != null ? stack1 : "")
     + " = "
-    + ((stack1 = alias2(alias1(depth0, "value", {"start":{"line":16,"column":17},"end":{"line":16,"column":22}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(depth0, "value", {"start":{"line":21,"column":17},"end":{"line":21,"column":22}} ), depth0)) != null ? stack1 : "")
     + ",\n";
 },"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
@@ -4102,15 +5557,27 @@ var partialExportEnum = {"1":function(container,depth0,helpers,partials,data) {
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":5,"column":7}}})) != null ? stack1 : "")
+  return ((stack1 = lookupProperty(helpers,"ifdef").call(alias1,lookupProperty(depth0,"description"),lookupProperty(depth0,"deprecated"),{"name":"ifdef","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":10,"column":10}}})) != null ? stack1 : "")
     + "export enum "
-    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":6,"column":15},"end":{"line":6,"column":19}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":11,"column":15},"end":{"line":11,"column":19}} ), depth0)) != null ? stack1 : "")
     + " {\n"
-    + ((stack1 = lookupProperty(helpers,"each").call(alias1,lookupProperty(depth0,"enum"),{"name":"each","hash":{},"fn":container.program(3, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":7,"column":1},"end":{"line":18,"column":10}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"each").call(alias1,lookupProperty(depth0,"enum"),{"name":"each","hash":{},"fn":container.program(6, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":12,"column":1},"end":{"line":23,"column":10}}})) != null ? stack1 : "")
     + "}";
 },"useData":true};
 
 var partialExportInterface = {"1":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "/**\n"
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(2, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":3,"column":0},"end":{"line":5,"column":7}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"deprecated"),{"name":"if","hash":{},"fn":container.program(4, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":6,"column":0},"end":{"line":8,"column":7}}})) != null ? stack1 : "")
+    + " */\n";
+},"2":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -4118,10 +5585,12 @@ var partialExportInterface = {"1":function(container,depth0,helpers,partials,dat
         return undefined
     };
 
-  return "/**\n * "
-    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":3,"column":3},"end":{"line":3,"column":34}}})) != null ? stack1 : "")
-    + "\n */\n";
-},"3":function(container,depth0,helpers,partials,data,blockParams,depths) {
+  return " * "
+    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":4,"column":3},"end":{"line":4,"column":34}}})) != null ? stack1 : "")
+    + "\n";
+},"4":function(container,depth0,helpers,partials,data) {
+    return " * @deprecated\n";
+},"6":function(container,depth0,helpers,partials,data,blockParams,depths) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -4129,35 +5598,49 @@ var partialExportInterface = {"1":function(container,depth0,helpers,partials,dat
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"if").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(4, data, 0, blockParams, depths),"inverse":container.noop,"data":data,"loc":{"start":{"line":8,"column":1},"end":{"line":12,"column":8}}})) != null ? stack1 : "")
+  return ((stack1 = lookupProperty(helpers,"ifdef").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),lookupProperty(depth0,"deprecated"),{"name":"ifdef","hash":{},"fn":container.program(7, data, 0, blockParams, depths),"inverse":container.noop,"data":data,"loc":{"start":{"line":13,"column":1},"end":{"line":22,"column":11}}})) != null ? stack1 : "")
     + "	"
     + ((stack1 = container.invokePartial(lookupProperty(partials,"isReadOnly"),depth0,{"name":"isReadOnly","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
-    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":13,"column":19},"end":{"line":13,"column":23}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":23,"column":19},"end":{"line":23,"column":23}} ), depth0)) != null ? stack1 : "")
     + ((stack1 = container.invokePartial(lookupProperty(partials,"isRequired"),depth0,{"name":"isRequired","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + ": "
     + ((stack1 = container.invokePartial(lookupProperty(partials,"type"),depth0,{"name":"type","hash":{"parent":lookupProperty(depths[1],"name")},"data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + ";\n";
-},"4":function(container,depth0,helpers,partials,data) {
-    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
-        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
-          return parent[propertyName];
-        }
-        return undefined
-    };
-
-  return "	/**\n	 * "
-    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":10,"column":4},"end":{"line":10,"column":35}}})) != null ? stack1 : "")
-    + "\n	 */\n";
-},"6":function(container,depth0,helpers,partials,data) {
-    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
-        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
-          return parent[propertyName];
-        }
-        return undefined
-    };
-
-  return ((stack1 = lookupProperty(helpers,"unless").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(lookupProperty(data,"root"),"useUnionTypes"),{"name":"unless","hash":{},"fn":container.program(7, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":17,"column":0},"end":{"line":36,"column":11}}})) != null ? stack1 : "");
 },"7":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "	/**\n"
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(8, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":15,"column":1},"end":{"line":17,"column":8}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"deprecated"),{"name":"if","hash":{},"fn":container.program(10, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":18,"column":1},"end":{"line":20,"column":8}}})) != null ? stack1 : "")
+    + "	 */\n";
+},"8":function(container,depth0,helpers,partials,data) {
+    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "	 * "
+    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":16,"column":4},"end":{"line":16,"column":35}}})) != null ? stack1 : "")
+    + "\n";
+},"10":function(container,depth0,helpers,partials,data) {
+    return "	 * @deprecated\n";
+},"12":function(container,depth0,helpers,partials,data) {
+    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return ((stack1 = lookupProperty(helpers,"unless").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(lookupProperty(data,"root"),"useUnionTypes"),{"name":"unless","hash":{},"fn":container.program(13, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":27,"column":0},"end":{"line":46,"column":11}}})) != null ? stack1 : "");
+},"13":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -4166,11 +5649,11 @@ var partialExportInterface = {"1":function(container,depth0,helpers,partials,dat
     };
 
   return "\nexport namespace "
-    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":19,"column":20},"end":{"line":19,"column":24}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":29,"column":20},"end":{"line":29,"column":24}} ), depth0)) != null ? stack1 : "")
     + " {\n\n"
-    + ((stack1 = lookupProperty(helpers,"each").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"enums"),{"name":"each","hash":{},"fn":container.program(8, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":21,"column":1},"end":{"line":33,"column":10}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"each").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"enums"),{"name":"each","hash":{},"fn":container.program(14, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":31,"column":1},"end":{"line":43,"column":10}}})) != null ? stack1 : "")
     + "\n}\n";
-},"8":function(container,depth0,helpers,partials,data) {
+},"14":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -4178,19 +5661,30 @@ var partialExportInterface = {"1":function(container,depth0,helpers,partials,dat
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(4, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":22,"column":1},"end":{"line":26,"column":8}}})) != null ? stack1 : "")
+  return ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(15, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":32,"column":1},"end":{"line":36,"column":8}}})) != null ? stack1 : "")
     + "	export enum "
-    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":27,"column":16},"end":{"line":27,"column":20}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":37,"column":16},"end":{"line":37,"column":20}} ), depth0)) != null ? stack1 : "")
     + " {\n"
-    + ((stack1 = lookupProperty(helpers,"each").call(alias1,lookupProperty(depth0,"enum"),{"name":"each","hash":{},"fn":container.program(9, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":28,"column":2},"end":{"line":30,"column":11}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"each").call(alias1,lookupProperty(depth0,"enum"),{"name":"each","hash":{},"fn":container.program(17, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":38,"column":2},"end":{"line":40,"column":11}}})) != null ? stack1 : "")
     + "	}\n\n";
-},"9":function(container,depth0,helpers,partials,data) {
+},"15":function(container,depth0,helpers,partials,data) {
+    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "	/**\n	 * "
+    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":34,"column":4},"end":{"line":34,"column":35}}})) != null ? stack1 : "")
+    + "\n	 */\n";
+},"17":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=container.strict, alias2=container.lambda;
 
   return "		"
-    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":29,"column":5},"end":{"line":29,"column":9}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":39,"column":5},"end":{"line":39,"column":9}} ), depth0)) != null ? stack1 : "")
     + " = "
-    + ((stack1 = alias2(alias1(depth0, "value", {"start":{"line":29,"column":18},"end":{"line":29,"column":23}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(depth0, "value", {"start":{"line":39,"column":18},"end":{"line":39,"column":23}} ), depth0)) != null ? stack1 : "")
     + ",\n";
 },"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data,blockParams,depths) {
     var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
@@ -4200,16 +5694,28 @@ var partialExportInterface = {"1":function(container,depth0,helpers,partials,dat
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(1, data, 0, blockParams, depths),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":5,"column":7}}})) != null ? stack1 : "")
+  return ((stack1 = lookupProperty(helpers,"ifdef").call(alias1,lookupProperty(depth0,"description"),lookupProperty(depth0,"deprecated"),{"name":"ifdef","hash":{},"fn":container.program(1, data, 0, blockParams, depths),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":10,"column":10}}})) != null ? stack1 : "")
     + "export type "
-    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":6,"column":15},"end":{"line":6,"column":19}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":11,"column":15},"end":{"line":11,"column":19}} ), depth0)) != null ? stack1 : "")
     + " = {\n"
-    + ((stack1 = lookupProperty(helpers,"each").call(alias1,lookupProperty(depth0,"properties"),{"name":"each","hash":{},"fn":container.program(3, data, 0, blockParams, depths),"inverse":container.noop,"data":data,"loc":{"start":{"line":7,"column":1},"end":{"line":14,"column":10}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"each").call(alias1,lookupProperty(depth0,"properties"),{"name":"each","hash":{},"fn":container.program(6, data, 0, blockParams, depths),"inverse":container.noop,"data":data,"loc":{"start":{"line":12,"column":1},"end":{"line":24,"column":10}}})) != null ? stack1 : "")
     + "};\n"
-    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"enums"),{"name":"if","hash":{},"fn":container.program(6, data, 0, blockParams, depths),"inverse":container.noop,"data":data,"loc":{"start":{"line":16,"column":0},"end":{"line":37,"column":7}}})) != null ? stack1 : "");
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"enums"),{"name":"if","hash":{},"fn":container.program(12, data, 0, blockParams, depths),"inverse":container.noop,"data":data,"loc":{"start":{"line":26,"column":0},"end":{"line":47,"column":7}}})) != null ? stack1 : "");
 },"usePartial":true,"useData":true,"useDepths":true};
 
 var partialExportType = {"1":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "/**\n"
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(2, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":3,"column":0},"end":{"line":5,"column":7}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"deprecated"),{"name":"if","hash":{},"fn":container.program(4, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":6,"column":0},"end":{"line":8,"column":7}}})) != null ? stack1 : "")
+    + " */\n";
+},"2":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -4217,9 +5723,11 @@ var partialExportType = {"1":function(container,depth0,helpers,partials,data) {
         return undefined
     };
 
-  return "/**\n * "
-    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":3,"column":3},"end":{"line":3,"column":34}}})) != null ? stack1 : "")
-    + "\n */\n";
+  return " * "
+    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":4,"column":3},"end":{"line":4,"column":34}}})) != null ? stack1 : "")
+    + "\n";
+},"4":function(container,depth0,helpers,partials,data) {
+    return " * @deprecated\n";
 },"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
@@ -4228,9 +5736,9 @@ var partialExportType = {"1":function(container,depth0,helpers,partials,data) {
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"if").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":5,"column":7}}})) != null ? stack1 : "")
+  return ((stack1 = lookupProperty(helpers,"ifdef").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),lookupProperty(depth0,"deprecated"),{"name":"ifdef","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":10,"column":10}}})) != null ? stack1 : "")
     + "export type "
-    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":6,"column":15},"end":{"line":6,"column":19}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":11,"column":15},"end":{"line":11,"column":19}} ), depth0)) != null ? stack1 : "")
     + " = "
     + ((stack1 = container.invokePartial(lookupProperty(partials,"type"),depth0,{"name":"type","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + ";";
@@ -4323,7 +5831,7 @@ var partialParameters = {"1":function(container,depth0,helpers,partials,data) {
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"if").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(lookupProperty(data,"root"),"useOptions"),{"name":"if","hash":{},"fn":container.program(2, data, 0),"inverse":container.program(9, data, 0),"data":data,"loc":{"start":{"line":2,"column":0},"end":{"line":20,"column":7}}})) != null ? stack1 : "");
+  return ((stack1 = lookupProperty(helpers,"if").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(lookupProperty(data,"root"),"useOptions"),{"name":"if","hash":{},"fn":container.program(2, data, 0),"inverse":container.program(12, data, 0),"data":data,"loc":{"start":{"line":2,"column":0},"end":{"line":27,"column":7}}})) != null ? stack1 : "");
 },"2":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
@@ -4335,7 +5843,7 @@ var partialParameters = {"1":function(container,depth0,helpers,partials,data) {
   return "{\n"
     + ((stack1 = lookupProperty(helpers,"each").call(alias1,lookupProperty(depth0,"parameters"),{"name":"each","hash":{},"fn":container.program(3, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":4,"column":0},"end":{"line":6,"column":9}}})) != null ? stack1 : "")
     + "}: {\n"
-    + ((stack1 = lookupProperty(helpers,"each").call(alias1,lookupProperty(depth0,"parameters"),{"name":"each","hash":{},"fn":container.program(6, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":8,"column":0},"end":{"line":13,"column":9}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"each").call(alias1,lookupProperty(depth0,"parameters"),{"name":"each","hash":{},"fn":container.program(6, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":8,"column":0},"end":{"line":20,"column":9}}})) != null ? stack1 : "")
     + "}";
 },"3":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
@@ -4361,13 +5869,25 @@ var partialParameters = {"1":function(container,depth0,helpers,partials,data) {
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"if").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(7, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":9,"column":0},"end":{"line":11,"column":7}}})) != null ? stack1 : "")
-    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":12,"column":3},"end":{"line":12,"column":7}} ), depth0)) != null ? stack1 : "")
+  return ((stack1 = lookupProperty(helpers,"ifdef").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),lookupProperty(depth0,"deprecated"),{"name":"ifdef","hash":{},"fn":container.program(7, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":9,"column":0},"end":{"line":18,"column":10}}})) != null ? stack1 : "")
+    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":19,"column":3},"end":{"line":19,"column":7}} ), depth0)) != null ? stack1 : "")
     + ((stack1 = container.invokePartial(lookupProperty(partials,"isRequired"),depth0,{"name":"isRequired","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + ": "
     + ((stack1 = container.invokePartial(lookupProperty(partials,"type"),depth0,{"name":"type","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + ",\n";
 },"7":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "/**\n"
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(8, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":11,"column":0},"end":{"line":13,"column":7}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"deprecated"),{"name":"if","hash":{},"fn":container.program(10, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":14,"column":0},"end":{"line":16,"column":7}}})) != null ? stack1 : "")
+    + " */\n";
+},"8":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -4375,10 +5895,12 @@ var partialParameters = {"1":function(container,depth0,helpers,partials,data) {
         return undefined
     };
 
-  return "/** "
-    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":10,"column":4},"end":{"line":10,"column":35}}})) != null ? stack1 : "")
-    + " **/\n";
-},"9":function(container,depth0,helpers,partials,data) {
+  return " * "
+    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":12,"column":3},"end":{"line":12,"column":34}}})) != null ? stack1 : "")
+    + "\n";
+},"10":function(container,depth0,helpers,partials,data) {
+    return " * @deprecated\n";
+},"12":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -4387,8 +5909,8 @@ var partialParameters = {"1":function(container,depth0,helpers,partials,data) {
     };
 
   return "\n"
-    + ((stack1 = lookupProperty(helpers,"each").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"parameters"),{"name":"each","hash":{},"fn":container.program(10, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":17,"column":0},"end":{"line":19,"column":9}}})) != null ? stack1 : "");
-},"10":function(container,depth0,helpers,partials,data) {
+    + ((stack1 = lookupProperty(helpers,"each").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"parameters"),{"name":"each","hash":{},"fn":container.program(13, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":24,"column":0},"end":{"line":26,"column":9}}})) != null ? stack1 : "");
+},"13":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -4396,11 +5918,11 @@ var partialParameters = {"1":function(container,depth0,helpers,partials,data) {
         return undefined
     };
 
-  return ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":18,"column":3},"end":{"line":18,"column":7}} ), depth0)) != null ? stack1 : "")
+  return ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":25,"column":3},"end":{"line":25,"column":7}} ), depth0)) != null ? stack1 : "")
     + ((stack1 = container.invokePartial(lookupProperty(partials,"isRequired"),depth0,{"name":"isRequired","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + ": "
     + ((stack1 = container.invokePartial(lookupProperty(partials,"type"),depth0,{"name":"type","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
-    + ((stack1 = lookupProperty(helpers,"if").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"default"),{"name":"if","hash":{},"fn":container.program(4, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":18,"column":36},"end":{"line":18,"column":74}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"if").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"default"),{"name":"if","hash":{},"fn":container.program(4, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":25,"column":36},"end":{"line":25,"column":74}}})) != null ? stack1 : "")
     + ",\n";
 },"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
@@ -4410,7 +5932,7 @@ var partialParameters = {"1":function(container,depth0,helpers,partials,data) {
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"if").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"parameters"),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":21,"column":7}}})) != null ? stack1 : "");
+  return ((stack1 = lookupProperty(helpers,"if").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"parameters"),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":28,"column":7}}})) != null ? stack1 : "");
 },"usePartial":true,"useData":true};
 
 var partialResult = {"1":function(container,depth0,helpers,partials,data) {
@@ -5236,7 +6758,7 @@ var partialTypeInterface = {"1":function(container,depth0,helpers,partials,data,
     };
 
   return "{\n"
-    + ((stack1 = lookupProperty(helpers,"each").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"properties"),{"name":"each","hash":{},"fn":container.program(2, data, 0, blockParams, depths),"inverse":container.noop,"data":data,"loc":{"start":{"line":3,"column":0},"end":{"line":14,"column":9}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"each").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"properties"),{"name":"each","hash":{},"fn":container.program(2, data, 0, blockParams, depths),"inverse":container.noop,"data":data,"loc":{"start":{"line":3,"column":0},"end":{"line":19,"column":9}}})) != null ? stack1 : "")
     + "}"
     + ((stack1 = container.invokePartial(lookupProperty(partials,"isNullable"),depth0,{"name":"isNullable","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "");
 },"2":function(container,depth0,helpers,partials,data,blockParams,depths) {
@@ -5247,9 +6769,21 @@ var partialTypeInterface = {"1":function(container,depth0,helpers,partials,data,
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(3, data, 0, blockParams, depths),"inverse":container.noop,"data":data,"loc":{"start":{"line":4,"column":0},"end":{"line":8,"column":7}}})) != null ? stack1 : "")
-    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depths[1],"parent"),{"name":"if","hash":{},"fn":container.program(5, data, 0, blockParams, depths),"inverse":container.program(7, data, 0, blockParams, depths),"data":data,"loc":{"start":{"line":9,"column":0},"end":{"line":13,"column":7}}})) != null ? stack1 : "");
+  return ((stack1 = lookupProperty(helpers,"ifdef").call(alias1,lookupProperty(depth0,"description"),lookupProperty(depth0,"deprecated"),{"name":"ifdef","hash":{},"fn":container.program(3, data, 0, blockParams, depths),"inverse":container.noop,"data":data,"loc":{"start":{"line":4,"column":0},"end":{"line":13,"column":10}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depths[1],"parent"),{"name":"if","hash":{},"fn":container.program(8, data, 0, blockParams, depths),"inverse":container.program(10, data, 0, blockParams, depths),"data":data,"loc":{"start":{"line":14,"column":0},"end":{"line":18,"column":7}}})) != null ? stack1 : "");
 },"3":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "/**\n"
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"description"),{"name":"if","hash":{},"fn":container.program(4, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":6,"column":0},"end":{"line":8,"column":7}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"deprecated"),{"name":"if","hash":{},"fn":container.program(6, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":9,"column":0},"end":{"line":11,"column":7}}})) != null ? stack1 : "")
+    + " */\n";
+},"4":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -5257,10 +6791,12 @@ var partialTypeInterface = {"1":function(container,depth0,helpers,partials,data,
         return undefined
     };
 
-  return "/**\n * "
-    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":6,"column":3},"end":{"line":6,"column":34}}})) != null ? stack1 : "")
-    + "\n */\n";
-},"5":function(container,depth0,helpers,partials,data,blockParams,depths) {
+  return " * "
+    + ((stack1 = lookupProperty(helpers,"escapeComment").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"description"),{"name":"escapeComment","hash":{},"data":data,"loc":{"start":{"line":7,"column":3},"end":{"line":7,"column":34}}})) != null ? stack1 : "")
+    + "\n";
+},"6":function(container,depth0,helpers,partials,data) {
+    return " * @deprecated\n";
+},"8":function(container,depth0,helpers,partials,data,blockParams,depths) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -5269,12 +6805,12 @@ var partialTypeInterface = {"1":function(container,depth0,helpers,partials,data,
     };
 
   return ((stack1 = container.invokePartial(lookupProperty(partials,"isReadOnly"),depth0,{"name":"isReadOnly","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
-    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":10,"column":18},"end":{"line":10,"column":22}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":15,"column":18},"end":{"line":15,"column":22}} ), depth0)) != null ? stack1 : "")
     + ((stack1 = container.invokePartial(lookupProperty(partials,"isRequired"),depth0,{"name":"isRequired","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + ": "
     + ((stack1 = container.invokePartial(lookupProperty(partials,"type"),depth0,{"name":"type","hash":{"parent":lookupProperty(depths[1],"parent")},"data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + ";\n";
-},"7":function(container,depth0,helpers,partials,data) {
+},"10":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -5283,12 +6819,12 @@ var partialTypeInterface = {"1":function(container,depth0,helpers,partials,data,
     };
 
   return ((stack1 = container.invokePartial(lookupProperty(partials,"isReadOnly"),depth0,{"name":"isReadOnly","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
-    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":12,"column":18},"end":{"line":12,"column":22}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = container.lambda(container.strict(depth0, "name", {"start":{"line":17,"column":18},"end":{"line":17,"column":22}} ), depth0)) != null ? stack1 : "")
     + ((stack1 = container.invokePartial(lookupProperty(partials,"isRequired"),depth0,{"name":"isRequired","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + ": "
     + ((stack1 = container.invokePartial(lookupProperty(partials,"type"),depth0,{"name":"type","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + ";\n";
-},"9":function(container,depth0,helpers,partials,data) {
+},"12":function(container,depth0,helpers,partials,data) {
     return "any";
 },"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data,blockParams,depths) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
@@ -5298,7 +6834,7 @@ var partialTypeInterface = {"1":function(container,depth0,helpers,partials,data,
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"if").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"properties"),{"name":"if","hash":{},"fn":container.program(1, data, 0, blockParams, depths),"inverse":container.program(9, data, 0, blockParams, depths),"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":18,"column":9}}})) != null ? stack1 : "");
+  return ((stack1 = lookupProperty(helpers,"if").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"properties"),{"name":"if","hash":{},"fn":container.program(1, data, 0, blockParams, depths),"inverse":container.program(12, data, 0, blockParams, depths),"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":23,"column":9}}})) != null ? stack1 : "");
 },"usePartial":true,"useData":true,"useDepths":true};
 
 var partialTypeIntersection = {"1":function(container,depth0,helpers,partials,data) {
@@ -5346,17 +6882,24 @@ var partialTypeUnion = {"1":function(container,depth0,helpers,partials,data) {
 },"usePartial":true,"useData":true};
 
 const registerHandlebarHelpers = (root) => {
-    Handlebars__default["default"].registerHelper('equals', function (a, b, options) {
+    runtime.registerHelper('ifdef', function (...args) {
+        const options = args.pop();
+        if (!args.every(value => !value)) {
+            return options.fn(this);
+        }
+        return options.inverse(this);
+    });
+    runtime.registerHelper('equals', function (a, b, options) {
         return a === b ? options.fn(this) : options.inverse(this);
     });
-    Handlebars__default["default"].registerHelper('notEquals', function (a, b, options) {
+    runtime.registerHelper('notEquals', function (a, b, options) {
         return a !== b ? options.fn(this) : options.inverse(this);
     });
-    Handlebars__default["default"].registerHelper('containsSpaces', function (value, options) {
+    runtime.registerHelper('containsSpaces', function (value, options) {
         return /\s+/.test(value) ? options.fn(this) : options.inverse(this);
     });
-    Handlebars__default["default"].registerHelper('union', function (properties, parent, options) {
-        const type = Handlebars__default["default"].partials['type'];
+    runtime.registerHelper('union', function (properties, parent, options) {
+        const type = runtime.partials['type'];
         const types = properties.map(property => type({ ...root, ...property, parent }));
         const uniqueTypes = types.filter(unique);
         let uniqueTypesString = uniqueTypes.join(' | ');
@@ -5365,8 +6908,8 @@ const registerHandlebarHelpers = (root) => {
         }
         return options.fn(uniqueTypesString);
     });
-    Handlebars__default["default"].registerHelper('intersection', function (properties, parent, options) {
-        const type = Handlebars__default["default"].partials['type'];
+    runtime.registerHelper('intersection', function (properties, parent, options) {
+        const type = runtime.partials['type'];
         const types = properties.map(property => type({ ...root, ...property, parent }));
         const uniqueTypes = types.filter(unique);
         let uniqueTypesString = uniqueTypes.join(' & ');
@@ -5375,7 +6918,7 @@ const registerHandlebarHelpers = (root) => {
         }
         return options.fn(uniqueTypesString);
     });
-    Handlebars__default["default"].registerHelper('enumerator', function (enumerators, parent, name, options) {
+    runtime.registerHelper('enumerator', function (enumerators, parent, name, options) {
         if (!root.useUnionTypes && parent && name) {
             return `${parent}.${name}`;
         }
@@ -5384,16 +6927,16 @@ const registerHandlebarHelpers = (root) => {
             .filter(unique)
             .join(' | '));
     });
-    Handlebars__default["default"].registerHelper('escapeComment', function (value) {
+    runtime.registerHelper('escapeComment', function (value) {
         return value
             .replace(/\*\//g, '*')
             .replace(/\/\*/g, '*')
             .replace(/\r?\n(.*)/g, (_, w) => `${os.EOL} * ${w.trim()}`);
     });
-    Handlebars__default["default"].registerHelper('escapeDescription', function (value) {
+    runtime.registerHelper('escapeDescription', function (value) {
         return value.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\${/g, '\\${');
     });
-    Handlebars__default["default"].registerHelper('camelCase', function (value) {
+    runtime.registerHelper('camelCase', function (value) {
         return camelCase__default["default"](value);
     });
 };
@@ -5406,133 +6949,108 @@ const registerHandlebarTemplates = (root) => {
     registerHandlebarHelpers(root);
     // Main templates (entry points for the files we write to disk)
     const templates = {
-        index: Handlebars__default["default"].template(templateIndex),
-        client: Handlebars__default["default"].template(templateClient),
+        index: runtime.template(templateIndex),
+        client: runtime.template(templateClient),
         exports: {
-            model: Handlebars__default["default"].template(templateExportModel),
-            schema: Handlebars__default["default"].template(templateExportSchema),
-            service: Handlebars__default["default"].template(templateExportService),
+            model: runtime.template(templateExportModel),
+            schema: runtime.template(templateExportSchema),
+            service: runtime.template(templateExportService),
         },
         core: {
-            settings: Handlebars__default["default"].template(templateCoreSettings),
-            apiError: Handlebars__default["default"].template(templateCoreApiError),
-            apiRequestOptions: Handlebars__default["default"].template(templateCoreApiRequestOptions),
-            apiResult: Handlebars__default["default"].template(templateCoreApiResult),
-            cancelablePromise: Handlebars__default["default"].template(templateCancelablePromise),
-            request: Handlebars__default["default"].template(templateCoreRequest),
-            baseHttpRequest: Handlebars__default["default"].template(templateCoreBaseHttpRequest),
-            httpRequest: Handlebars__default["default"].template(templateCoreHttpRequest),
+            settings: runtime.template(templateCoreSettings),
+            apiError: runtime.template(templateCoreApiError),
+            apiRequestOptions: runtime.template(templateCoreApiRequestOptions),
+            apiResult: runtime.template(templateCoreApiResult),
+            cancelablePromise: runtime.template(templateCancelablePromise),
+            request: runtime.template(templateCoreRequest),
+            baseHttpRequest: runtime.template(templateCoreBaseHttpRequest),
+            httpRequest: runtime.template(templateCoreHttpRequest),
         },
     };
     // Partials for the generations of the models, services, etc.
-    Handlebars__default["default"].registerPartial('exportEnum', Handlebars__default["default"].template(partialExportEnum));
-    Handlebars__default["default"].registerPartial('exportInterface', Handlebars__default["default"].template(partialExportInterface));
-    Handlebars__default["default"].registerPartial('exportComposition', Handlebars__default["default"].template(partialExportComposition));
-    Handlebars__default["default"].registerPartial('exportType', Handlebars__default["default"].template(partialExportType));
-    Handlebars__default["default"].registerPartial('header', Handlebars__default["default"].template(partialHeader));
-    Handlebars__default["default"].registerPartial('isNullable', Handlebars__default["default"].template(partialIsNullable));
-    Handlebars__default["default"].registerPartial('isReadOnly', Handlebars__default["default"].template(partialIsReadOnly));
-    Handlebars__default["default"].registerPartial('isRequired', Handlebars__default["default"].template(partialIsRequired));
-    Handlebars__default["default"].registerPartial('parameters', Handlebars__default["default"].template(partialParameters));
-    Handlebars__default["default"].registerPartial('result', Handlebars__default["default"].template(partialResult));
-    Handlebars__default["default"].registerPartial('schema', Handlebars__default["default"].template(partialSchema));
-    Handlebars__default["default"].registerPartial('schemaArray', Handlebars__default["default"].template(partialSchemaArray));
-    Handlebars__default["default"].registerPartial('schemaDictionary', Handlebars__default["default"].template(partialSchemaDictionary));
-    Handlebars__default["default"].registerPartial('schemaEnum', Handlebars__default["default"].template(partialSchemaEnum));
-    Handlebars__default["default"].registerPartial('schemaGeneric', Handlebars__default["default"].template(partialSchemaGeneric));
-    Handlebars__default["default"].registerPartial('schemaInterface', Handlebars__default["default"].template(partialSchemaInterface));
-    Handlebars__default["default"].registerPartial('schemaComposition', Handlebars__default["default"].template(partialSchemaComposition));
-    Handlebars__default["default"].registerPartial('type', Handlebars__default["default"].template(partialType));
-    Handlebars__default["default"].registerPartial('typeArray', Handlebars__default["default"].template(partialTypeArray));
-    Handlebars__default["default"].registerPartial('typeDictionary', Handlebars__default["default"].template(partialTypeDictionary));
-    Handlebars__default["default"].registerPartial('typeEnum', Handlebars__default["default"].template(partialTypeEnum));
-    Handlebars__default["default"].registerPartial('typeGeneric', Handlebars__default["default"].template(partialTypeGeneric));
-    Handlebars__default["default"].registerPartial('typeInterface', Handlebars__default["default"].template(partialTypeInterface));
-    Handlebars__default["default"].registerPartial('typeReference', Handlebars__default["default"].template(partialTypeReference));
-    Handlebars__default["default"].registerPartial('typeUnion', Handlebars__default["default"].template(partialTypeUnion));
-    Handlebars__default["default"].registerPartial('typeIntersection', Handlebars__default["default"].template(partialTypeIntersection));
-    Handlebars__default["default"].registerPartial('base', Handlebars__default["default"].template(partialBase));
+    runtime.registerPartial('exportEnum', runtime.template(partialExportEnum));
+    runtime.registerPartial('exportInterface', runtime.template(partialExportInterface));
+    runtime.registerPartial('exportComposition', runtime.template(partialExportComposition));
+    runtime.registerPartial('exportType', runtime.template(partialExportType));
+    runtime.registerPartial('header', runtime.template(partialHeader));
+    runtime.registerPartial('isNullable', runtime.template(partialIsNullable));
+    runtime.registerPartial('isReadOnly', runtime.template(partialIsReadOnly));
+    runtime.registerPartial('isRequired', runtime.template(partialIsRequired));
+    runtime.registerPartial('parameters', runtime.template(partialParameters));
+    runtime.registerPartial('result', runtime.template(partialResult));
+    runtime.registerPartial('schema', runtime.template(partialSchema));
+    runtime.registerPartial('schemaArray', runtime.template(partialSchemaArray));
+    runtime.registerPartial('schemaDictionary', runtime.template(partialSchemaDictionary));
+    runtime.registerPartial('schemaEnum', runtime.template(partialSchemaEnum));
+    runtime.registerPartial('schemaGeneric', runtime.template(partialSchemaGeneric));
+    runtime.registerPartial('schemaInterface', runtime.template(partialSchemaInterface));
+    runtime.registerPartial('schemaComposition', runtime.template(partialSchemaComposition));
+    runtime.registerPartial('type', runtime.template(partialType));
+    runtime.registerPartial('typeArray', runtime.template(partialTypeArray));
+    runtime.registerPartial('typeDictionary', runtime.template(partialTypeDictionary));
+    runtime.registerPartial('typeEnum', runtime.template(partialTypeEnum));
+    runtime.registerPartial('typeGeneric', runtime.template(partialTypeGeneric));
+    runtime.registerPartial('typeInterface', runtime.template(partialTypeInterface));
+    runtime.registerPartial('typeReference', runtime.template(partialTypeReference));
+    runtime.registerPartial('typeUnion', runtime.template(partialTypeUnion));
+    runtime.registerPartial('typeIntersection', runtime.template(partialTypeIntersection));
+    runtime.registerPartial('base', runtime.template(partialBase));
     // Generic functions used in 'request' file @see src/templates/core/request.hbs for more info
-    Handlebars__default["default"].registerPartial('functions/catchErrorCodes', Handlebars__default["default"].template(functionCatchErrorCodes));
-    Handlebars__default["default"].registerPartial('functions/getFormData', Handlebars__default["default"].template(functionGetFormData));
-    Handlebars__default["default"].registerPartial('functions/getQueryString', Handlebars__default["default"].template(functionGetQueryString));
-    Handlebars__default["default"].registerPartial('functions/getUrl', Handlebars__default["default"].template(functionGetUrl));
-    Handlebars__default["default"].registerPartial('functions/isBlob', Handlebars__default["default"].template(functionIsBlob));
-    Handlebars__default["default"].registerPartial('functions/isDefined', Handlebars__default["default"].template(functionIsDefined));
-    Handlebars__default["default"].registerPartial('functions/isFormData', Handlebars__default["default"].template(functionIsFormData));
-    Handlebars__default["default"].registerPartial('functions/isString', Handlebars__default["default"].template(functionIsString));
-    Handlebars__default["default"].registerPartial('functions/isStringWithValue', Handlebars__default["default"].template(functionIsStringWithValue));
-    Handlebars__default["default"].registerPartial('functions/isSuccess', Handlebars__default["default"].template(functionIsSuccess));
-    Handlebars__default["default"].registerPartial('functions/base64', Handlebars__default["default"].template(functionBase64));
-    Handlebars__default["default"].registerPartial('functions/resolve', Handlebars__default["default"].template(functionResolve));
+    runtime.registerPartial('functions/catchErrorCodes', runtime.template(functionCatchErrorCodes));
+    runtime.registerPartial('functions/getFormData', runtime.template(functionGetFormData));
+    runtime.registerPartial('functions/getQueryString', runtime.template(functionGetQueryString));
+    runtime.registerPartial('functions/getUrl', runtime.template(functionGetUrl));
+    runtime.registerPartial('functions/isBlob', runtime.template(functionIsBlob));
+    runtime.registerPartial('functions/isDefined', runtime.template(functionIsDefined));
+    runtime.registerPartial('functions/isFormData', runtime.template(functionIsFormData));
+    runtime.registerPartial('functions/isString', runtime.template(functionIsString));
+    runtime.registerPartial('functions/isStringWithValue', runtime.template(functionIsStringWithValue));
+    runtime.registerPartial('functions/isSuccess', runtime.template(functionIsSuccess));
+    runtime.registerPartial('functions/base64', runtime.template(functionBase64));
+    runtime.registerPartial('functions/resolve', runtime.template(functionResolve));
     // Specific files for the fetch client implementation
-    Handlebars__default["default"].registerPartial('fetch/getHeaders', Handlebars__default["default"].template(fetchGetHeaders));
-    Handlebars__default["default"].registerPartial('fetch/getRequestBody', Handlebars__default["default"].template(fetchGetRequestBody));
-    Handlebars__default["default"].registerPartial('fetch/getResponseBody', Handlebars__default["default"].template(fetchGetResponseBody));
-    Handlebars__default["default"].registerPartial('fetch/getResponseHeader', Handlebars__default["default"].template(fetchGetResponseHeader));
-    Handlebars__default["default"].registerPartial('fetch/sendRequest', Handlebars__default["default"].template(fetchSendRequest));
-    Handlebars__default["default"].registerPartial('fetch/request', Handlebars__default["default"].template(fetchRequest));
+    runtime.registerPartial('fetch/getHeaders', runtime.template(fetchGetHeaders));
+    runtime.registerPartial('fetch/getRequestBody', runtime.template(fetchGetRequestBody));
+    runtime.registerPartial('fetch/getResponseBody', runtime.template(fetchGetResponseBody));
+    runtime.registerPartial('fetch/getResponseHeader', runtime.template(fetchGetResponseHeader));
+    runtime.registerPartial('fetch/sendRequest', runtime.template(fetchSendRequest));
+    runtime.registerPartial('fetch/request', runtime.template(fetchRequest));
     // Specific files for the xhr client implementation
-    Handlebars__default["default"].registerPartial('xhr/getHeaders', Handlebars__default["default"].template(xhrGetHeaders));
-    Handlebars__default["default"].registerPartial('xhr/getRequestBody', Handlebars__default["default"].template(xhrGetRequestBody));
-    Handlebars__default["default"].registerPartial('xhr/getResponseBody', Handlebars__default["default"].template(xhrGetResponseBody));
-    Handlebars__default["default"].registerPartial('xhr/getResponseHeader', Handlebars__default["default"].template(xhrGetResponseHeader));
-    Handlebars__default["default"].registerPartial('xhr/sendRequest', Handlebars__default["default"].template(xhrSendRequest));
-    Handlebars__default["default"].registerPartial('xhr/request', Handlebars__default["default"].template(xhrRequest));
+    runtime.registerPartial('xhr/getHeaders', runtime.template(xhrGetHeaders));
+    runtime.registerPartial('xhr/getRequestBody', runtime.template(xhrGetRequestBody));
+    runtime.registerPartial('xhr/getResponseBody', runtime.template(xhrGetResponseBody));
+    runtime.registerPartial('xhr/getResponseHeader', runtime.template(xhrGetResponseHeader));
+    runtime.registerPartial('xhr/sendRequest', runtime.template(xhrSendRequest));
+    runtime.registerPartial('xhr/request', runtime.template(xhrRequest));
     // Specific files for the node client implementation
-    Handlebars__default["default"].registerPartial('node/getHeaders', Handlebars__default["default"].template(nodeGetHeaders));
-    Handlebars__default["default"].registerPartial('node/getRequestBody', Handlebars__default["default"].template(nodeGetRequestBody));
-    Handlebars__default["default"].registerPartial('node/getResponseBody', Handlebars__default["default"].template(nodeGetResponseBody));
-    Handlebars__default["default"].registerPartial('node/getResponseHeader', Handlebars__default["default"].template(nodeGetResponseHeader));
-    Handlebars__default["default"].registerPartial('node/sendRequest', Handlebars__default["default"].template(nodeSendRequest));
-    Handlebars__default["default"].registerPartial('node/request', Handlebars__default["default"].template(nodeRequest));
+    runtime.registerPartial('node/getHeaders', runtime.template(nodeGetHeaders));
+    runtime.registerPartial('node/getRequestBody', runtime.template(nodeGetRequestBody));
+    runtime.registerPartial('node/getResponseBody', runtime.template(nodeGetResponseBody));
+    runtime.registerPartial('node/getResponseHeader', runtime.template(nodeGetResponseHeader));
+    runtime.registerPartial('node/sendRequest', runtime.template(nodeSendRequest));
+    runtime.registerPartial('node/request', runtime.template(nodeRequest));
     // Specific files for the axios client implementation
-    Handlebars__default["default"].registerPartial('axios/getHeaders', Handlebars__default["default"].template(axiosGetHeaders));
-    Handlebars__default["default"].registerPartial('axios/getRequestBody', Handlebars__default["default"].template(axiosGetRequestBody));
-    Handlebars__default["default"].registerPartial('axios/getResponseBody', Handlebars__default["default"].template(axiosGetResponseBody));
-    Handlebars__default["default"].registerPartial('axios/getResponseHeader', Handlebars__default["default"].template(axiosGetResponseHeader));
-    Handlebars__default["default"].registerPartial('axios/sendRequest', Handlebars__default["default"].template(axiosSendRequest));
-    Handlebars__default["default"].registerPartial('axios/request', Handlebars__default["default"].template(axiosRequest));
+    runtime.registerPartial('axios/getHeaders', runtime.template(axiosGetHeaders));
+    runtime.registerPartial('axios/getRequestBody', runtime.template(axiosGetRequestBody));
+    runtime.registerPartial('axios/getResponseBody', runtime.template(axiosGetResponseBody));
+    runtime.registerPartial('axios/getResponseHeader', runtime.template(axiosGetResponseHeader));
+    runtime.registerPartial('axios/sendRequest', runtime.template(axiosSendRequest));
+    runtime.registerPartial('axios/request', runtime.template(axiosRequest));
     // Specific files for the angular client implementation
-    Handlebars__default["default"].registerPartial('angular/getHeaders', Handlebars__default["default"].template(angularGetHeaders));
-    Handlebars__default["default"].registerPartial('angular/getRequestBody', Handlebars__default["default"].template(angularGetRequestBody));
-    Handlebars__default["default"].registerPartial('angular/getResponseBody', Handlebars__default["default"].template(angularGetResponseBody));
-    Handlebars__default["default"].registerPartial('angular/getResponseHeader', Handlebars__default["default"].template(angularGetResponseHeader));
-    Handlebars__default["default"].registerPartial('angular/sendRequest', Handlebars__default["default"].template(angularSendRequest));
-    Handlebars__default["default"].registerPartial('angular/request', Handlebars__default["default"].template(angularRequest));
+    runtime.registerPartial('angular/getHeaders', runtime.template(angularGetHeaders));
+    runtime.registerPartial('angular/getRequestBody', runtime.template(angularGetRequestBody));
+    runtime.registerPartial('angular/getResponseBody', runtime.template(angularGetResponseBody));
+    runtime.registerPartial('angular/getResponseHeader', runtime.template(angularGetResponseHeader));
+    runtime.registerPartial('angular/sendRequest', runtime.template(angularSendRequest));
+    runtime.registerPartial('angular/request', runtime.template(angularRequest));
     return templates;
 };
 
-// Wrapped file system calls
-util.promisify(fs.readFile);
-const writeFile = util.promisify(fs.writeFile);
-const copyFile = util.promisify(fs.copyFile);
-const exists = util.promisify(fs.exists);
-const mkdir = (path) => new Promise((resolve, reject) => {
-    fs.mkdir(path, {
-        recursive: true,
-    }, error => {
-        if (error) {
-            reject(error);
-        }
-        else {
-            resolve();
-        }
-    });
-});
-const rmdir = (path) => new Promise((resolve, reject) => {
-    fs.rm(path, {
-        recursive: true,
-        force: true,
-    }, error => {
-        if (error) {
-            reject(error);
-        }
-        else {
-            resolve();
-        }
-    });
-});
+const writeFile = fsExtra.writeFile;
+const copyFile = fsExtra.copyFile;
+const exists = fsExtra.pathExists;
+const mkdir = fsExtra.mkdirp;
+const rmdir = fsExtra.remove;
 
 const isSubDirectory = (parent, child) => {
     return path.relative(child, parent).startsWith('..');
@@ -5572,7 +7090,9 @@ const formatIndentation = (s, indent) => {
                 return line; // Default output is tab formatted
         }
     });
-    return lines.join(os.EOL);
+    // Make sure we have a blank line at the end
+    const content = lines.join(os.EOL);
+    return `${content}${os.EOL}`;
 };
 
 /**

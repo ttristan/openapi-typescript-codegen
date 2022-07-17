@@ -4,7 +4,6 @@ import typescript from '@rollup/plugin-typescript';
 import { readFileSync } from 'fs';
 import { precompile } from 'handlebars';
 import { dirname, extname, resolve } from 'path';
-import externals from 'rollup-plugin-node-externals';
 import { terser } from 'rollup-plugin-terser';
 
 /**
@@ -28,6 +27,7 @@ const handlebarsPlugin = () => ({
                 preventIndent: true,
                 knownHelpersOnly: true,
                 knownHelpers: {
+                    ifdef: true,
                     equals: true,
                     notEquals: true,
                     containsSpaces: true,
@@ -47,9 +47,6 @@ const handlebarsPlugin = () => ({
 
 const getPlugins = () => {
     const plugins = [
-        externals({
-            deps: true,
-        }),
         nodeResolve(),
         commonjs({
             sourceMap: false,
@@ -72,5 +69,6 @@ export default {
         file: './dist/index.js',
         format: 'cjs',
     },
+    external: ['camelcase', 'commander', 'fs-extra', 'handlebars', 'json-schema-ref-parser'],
     plugins: getPlugins(),
 };
