@@ -20,6 +20,6 @@ export class ApiError extends Error {
 		this.statusText = response.statusText;
 		this.body = response.body;
 		this.request = request;
-		this.response = response;
+        this.response = response.response;
 	}
 }
