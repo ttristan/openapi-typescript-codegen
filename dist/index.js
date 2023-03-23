@@ -4178,7 +4178,7 @@ var templateCoreApiResult = {"compiler":[8,">= 4.3.0"],"main":function(container
     };
 
   return ((stack1 = container.invokePartial(lookupProperty(partials,"header"),depth0,{"name":"header","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
-    + "\nexport type ApiResult = {\n	readonly url: string;\n	readonly ok: boolean;\n	readonly status: number;\n	readonly statusText: string;\n	readonly body: any;\n	readonly response: AxiosResponse<any, any>;\n};";
+    + "import { AxiosResponse } from \"axios\";\n\nexport type ApiResult = {\n	readonly url: string;\n	readonly ok: boolean;\n	readonly status: number;\n	readonly statusText: string;\n	readonly body: any;\n	readonly response: AxiosResponse<any, any>;\n};";
 },"usePartial":true,"useData":true};
 
 var axiosGetHeaders = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
