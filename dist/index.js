@@ -4033,8 +4033,8 @@ var templateClient = {"1":function(container,depth0,helpers,partials,data) {
     + ((stack1 = alias2(alias1(depth0, "server", {"start":{"line":64,"column":29},"end":{"line":64,"column":35}} ), depth0)) != null ? stack1 : "")
     + "',\n			VERSION: config?.VERSION ?? '"
     + ((stack1 = alias2(alias1(depth0, "version", {"start":{"line":65,"column":35},"end":{"line":65,"column":42}} ), depth0)) != null ? stack1 : "")
-    + "',\n			WITH_CREDENTIALS: config?.WITH_CREDENTIALS ?? false,\n			CREDENTIALS: config?.CREDENTIALS ?? 'include',\n			TOKEN: config?.TOKEN,\n			USERNAME: config?.USERNAME,\n			PASSWORD: config?.PASSWORD,\n			HEADERS: config?.HEADERS,\n			ENCODE_PATH: config?.ENCODE_PATH,\n		});\n\n"
-    + ((stack1 = lookupProperty(helpers,"each").call(alias3,lookupProperty(depth0,"services"),{"name":"each","hash":{},"fn":container.program(14, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":75,"column":2},"end":{"line":77,"column":11}}})) != null ? stack1 : "")
+    + "',\n			WITH_CREDENTIALS: config?.WITH_CREDENTIALS ?? false,\n			CREDENTIALS: config?.CREDENTIALS ?? 'include',\n			TOKEN: config?.TOKEN,\n			USERNAME: config?.USERNAME,\n			PASSWORD: config?.PASSWORD,\n			HEADERS: config?.HEADERS,\n			ENCODE_PATH: config?.ENCODE_PATH,\n			MAX_REDIRECTS: config?.MAX_REDIRECTS,\n		});\n\n"
+    + ((stack1 = lookupProperty(helpers,"each").call(alias3,lookupProperty(depth0,"services"),{"name":"each","hash":{},"fn":container.program(14, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":76,"column":2},"end":{"line":78,"column":11}}})) != null ? stack1 : "")
     + "	}\n}\n";
 },"12":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=container.strict, alias2=container.lambda, lookupProperty = container.lookupProperty || function(parent, propertyName) {
@@ -4059,10 +4059,10 @@ var templateClient = {"1":function(container,depth0,helpers,partials,data) {
     };
 
   return "		this."
-    + ((stack1 = lookupProperty(helpers,"camelCase").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"name"),{"name":"camelCase","hash":{},"data":data,"loc":{"start":{"line":76,"column":7},"end":{"line":76,"column":27}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"camelCase").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"name"),{"name":"camelCase","hash":{},"data":data,"loc":{"start":{"line":77,"column":7},"end":{"line":77,"column":27}}})) != null ? stack1 : "")
     + " = new "
-    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":76,"column":37},"end":{"line":76,"column":41}} ), depth0)) != null ? stack1 : "")
-    + ((stack1 = alias2(alias1(lookupProperty(data,"root"), "postfix", {"start":{"line":76,"column":47},"end":{"line":76,"column":60}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":77,"column":37},"end":{"line":77,"column":41}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(lookupProperty(data,"root"), "postfix", {"start":{"line":77,"column":47},"end":{"line":77,"column":60}} ), depth0)) != null ? stack1 : "")
     + "(this.request);\n";
 },"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
@@ -4078,7 +4078,7 @@ var templateClient = {"1":function(container,depth0,helpers,partials,data) {
     + "\n"
     + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"services"),{"name":"if","hash":{},"fn":container.program(5, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":17,"column":0},"end":{"line":21,"column":7}}})) != null ? stack1 : "")
     + "\n"
-    + ((stack1 = lookupProperty(helpers,"equals").call(alias1,lookupProperty(lookupProperty(data,"root"),"httpClient"),"angular",{"name":"equals","hash":{},"fn":container.program(8, data, 0),"inverse":container.program(11, data, 0),"data":data,"loc":{"start":{"line":23,"column":0},"end":{"line":80,"column":11}}})) != null ? stack1 : "");
+    + ((stack1 = lookupProperty(helpers,"equals").call(alias1,lookupProperty(lookupProperty(data,"root"),"httpClient"),"angular",{"name":"equals","hash":{},"fn":container.program(8, data, 0),"inverse":container.program(11, data, 0),"data":data,"loc":{"start":{"line":23,"column":0},"end":{"line":81,"column":11}}})) != null ? stack1 : "");
 },"usePartial":true,"useData":true};
 
 var angularGetHeaders = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
@@ -4244,7 +4244,7 @@ var axiosRequest = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,h
 },"usePartial":true,"useData":true};
 
 var axiosSendRequest = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "const sendRequest = async <T>(\n	config: OpenAPIConfig,\n	options: ApiRequestOptions,\n	url: string,\n	body: any,\n	formData: FormData | undefined,\n	headers: Record<string, string>,\n	onCancel: OnCancel\n): Promise<AxiosResponse<T>> => {\n	const source = axios.CancelToken.source();\n\n	const requestConfig: AxiosRequestConfig = {\n		url,\n		headers,\n		data: body ?? formData,\n		method: options.method,\n		withCredentials: config.WITH_CREDENTIALS,\n		cancelToken: source.token,\n	};\n\n	onCancel(() => source.cancel('The user aborted a request.'));\n\n	try {\n		return await axios.request(requestConfig);\n	} catch (error) {\n		const axiosError = error as AxiosError<T>;\n		if (axiosError.response) {\n			return axiosError.response;\n		}\n		throw error;\n	}\n};";
+    return "const sendRequest = async <T>(\n	config: OpenAPIConfig,\n	options: ApiRequestOptions,\n	url: string,\n	body: any,\n	formData: FormData | undefined,\n	headers: Record<string, string>,\n	onCancel: OnCancel\n): Promise<AxiosResponse<T>> => {\n	const source = axios.CancelToken.source();\n\n	const requestConfig: AxiosRequestConfig = {\n		url,\n		headers,\n		data: body ?? formData,\n		method: options.method,\n		withCredentials: config.WITH_CREDENTIALS,\n		cancelToken: source.token,\n		maxRedirects: config.MAX_REDIRECTS,\n	};\n\n	onCancel(() => source.cancel('The user aborted a request.'));\n\n	try {\n		return await axios.request(requestConfig);\n	} catch (error) {\n		const axiosError = error as AxiosError<T>;\n		if (axiosError.response) {\n			return axiosError.response;\n		}\n		throw error;\n	}\n};";
 },"useData":true};
 
 var templateCoreBaseHttpRequest = {"1":function(container,depth0,helpers,partials,data) {
@@ -4510,11 +4510,11 @@ var templateCoreSettings = {"compiler":[8,">= 4.3.0"],"main":function(container,
     };
 
   return ((stack1 = container.invokePartial(lookupProperty(partials,"header"),depth0,{"name":"header","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
-    + "\nimport type { ApiRequestOptions } from './ApiRequestOptions';\n\ntype Resolver<T> = (options: ApiRequestOptions) => Promise<T>;\ntype Headers = Record<string, string>;\n\nexport type OpenAPIConfig = {\n	BASE: string;\n	VERSION: string;\n	WITH_CREDENTIALS: boolean;\n	CREDENTIALS: 'include' | 'omit' | 'same-origin';\n	TOKEN?: string | Resolver<string>;\n	USERNAME?: string | Resolver<string>;\n	PASSWORD?: string | Resolver<string>;\n	HEADERS?: Headers | Resolver<Headers>;\n	ENCODE_PATH?: (path: string) => string;\n};\n\nexport const OpenAPI: OpenAPIConfig = {\n	BASE: '"
-    + ((stack1 = alias2(alias1(depth0, "server", {"start":{"line":21,"column":11},"end":{"line":21,"column":17}} ), depth0)) != null ? stack1 : "")
+    + "\nimport type { ApiRequestOptions } from './ApiRequestOptions';\n\ntype Resolver<T> = (options: ApiRequestOptions) => Promise<T>;\ntype Headers = Record<string, string>;\n\nexport type OpenAPIConfig = {\n	BASE: string;\n	VERSION: string;\n	WITH_CREDENTIALS: boolean;\n	CREDENTIALS: 'include' | 'omit' | 'same-origin';\n	TOKEN?: string | Resolver<string>;\n	USERNAME?: string | Resolver<string>;\n	PASSWORD?: string | Resolver<string>;\n	HEADERS?: Headers | Resolver<Headers>;\n	ENCODE_PATH?: (path: string) => string;\n	MAX_REDIRECTS?: number;\n};\n\nexport const OpenAPI: OpenAPIConfig = {\n	BASE: '"
+    + ((stack1 = alias2(alias1(depth0, "server", {"start":{"line":22,"column":11},"end":{"line":22,"column":17}} ), depth0)) != null ? stack1 : "")
     + "',\n	VERSION: '"
-    + ((stack1 = alias2(alias1(depth0, "version", {"start":{"line":22,"column":14},"end":{"line":22,"column":21}} ), depth0)) != null ? stack1 : "")
-    + "',\n	WITH_CREDENTIALS: false,\n	CREDENTIALS: 'include',\n	TOKEN: undefined,\n	USERNAME: undefined,\n	PASSWORD: undefined,\n	HEADERS: undefined,\n	ENCODE_PATH: undefined,\n};";
+    + ((stack1 = alias2(alias1(depth0, "version", {"start":{"line":23,"column":14},"end":{"line":23,"column":21}} ), depth0)) != null ? stack1 : "")
+    + "',\n	WITH_CREDENTIALS: false,\n	CREDENTIALS: 'include',\n	TOKEN: undefined,\n	USERNAME: undefined,\n	PASSWORD: undefined,\n	HEADERS: undefined,\n	ENCODE_PATH: undefined,\n	MAX_REDIRECTS: undefined,\n};";
 },"usePartial":true,"useData":true};
 
 var templateCoreRequest = {"1":function(container,depth0,helpers,partials,data) {
